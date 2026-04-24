@@ -3,12 +3,19 @@ package com.example.aasha.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aasha.data.repository.MainRepository
+import com.example.aasha.data.repository.PatientRepository
 import com.example.aasha.domain.model.Patient
 import com.example.aasha.data.local.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
+
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 data class DashboardUiState(
     val ashaName: String = "Savitri Devi",
@@ -18,7 +25,10 @@ data class DashboardUiState(
     val vaccinationsDue: Int = 0,
     val ancCheckups: Int = 0,
     val patients: List<Patient> = emptyList(),
-    val tasks: List<PatientTask> = emptyList()
+    val tasks: List<PatientTask> = emptyList(),
+    val isSyncing: Boolean = false,
+    val pendingCount: Int = 0,
+    val lastSyncTime: Long = 0L
 )
 
 data class PatientTask(
@@ -31,23 +41,44 @@ data class PatientTask(
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val repository: MainRepository,
-    private val sessionManager: SessionManager
+    private val patientRepository: PatientRepository,
+    private val sessionManager: SessionManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
+    private val _isSyncing = MutableStateFlow(false)
+    
+    private val _syncEvents = MutableSharedFlow<String>()
+    val syncEvents: SharedFlow<String> = _syncEvents.asSharedFlow()
+
+    private val sessionFlow = combine(
+        sessionManager.name,
+        sessionManager.locality
+    ) { name, locality -> name to locality }
+
+    private val syncStatusFlow = combine(
+        patientRepository.pendingCount,
+        patientRepository.lastSyncTime,
+        _isSyncing
+    ) { pending, lastSync, syncing -> Triple(pending, lastSync, syncing) }
+
     val uiState: StateFlow<DashboardUiState> = combine(
         _searchQuery.flatMapLatest { query ->
-            if (query.isEmpty()) repository.patients else repository.searchPatients(query)
+            if (query.isEmpty()) patientRepository.patients else patientRepository.searchPatients(query)
         },
         repository.appointments,
-        sessionManager.workerId,
-        sessionManager.locality
-    ) { patients, appointments, workerId, locality ->
+        sessionFlow,
+        syncStatusFlow
+    ) { patients, appointments, session, syncStatus ->
+        val (name, locality) = session
+        val (pendingCount, lastSyncTime, isSyncing) = syncStatus
+        
         DashboardUiState(
             patients = patients,
-            ashaName = if (workerId != null) "Aasha Worker ($workerId)" else "Savitri Devi",
+            ashaName = name ?: "Savitri Devi",
             area = locality ?: "Bishnupur Village",
             appointmentsToday = appointments.filter { 
                 val today = System.currentTimeMillis()
@@ -55,13 +86,50 @@ class DashboardViewModel @Inject constructor(
             }.size,
             tasks = appointments.map { 
                 PatientTask(it.id, it.patientName, "Follow-up", false) 
-            }
+            },
+            pendingCount = pendingCount,
+            lastSyncTime = lastSyncTime,
+            isSyncing = isSyncing,
+            isOnline = true
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = DashboardUiState()
     )
+
+    init {
+        patientRepository.enqueuePeriodicSync()
+        observeSyncStatus()
+    }
+
+    private fun observeSyncStatus() {
+        WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWorkFlow("patient_sync")
+            .onEach { workInfos ->
+                val workInfo = workInfos.firstOrNull() ?: return@onEach
+                
+                val isRunning = workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
+                
+                if (isRunning && !_isSyncing.value) {
+                    _syncEvents.emit("Sync Started")
+                } else if (!isRunning && _isSyncing.value) {
+                    if (workInfo.state == WorkInfo.State.SUCCEEDED) {
+                        _syncEvents.emit("Sync Completed")
+                    } else if (workInfo.state == WorkInfo.State.FAILED) {
+                        _syncEvents.emit("Sync Failed")
+                    }
+                }
+                
+                _isSyncing.value = isRunning
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun triggerSync() {
+        Log.d("SYNC_DEBUG", "🔥 UI triggered sync")
+        patientRepository.triggerSync()
+    }
 
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query

@@ -9,7 +9,7 @@ import javax.inject.Inject
 @HiltAndroidApp
 class AashaApplication : Application(), Configuration.Provider {
 
-    @Inject
+    @Inject 
     lateinit var workerFactory: HiltWorkerFactory
 
     override val workManagerConfiguration: Configuration

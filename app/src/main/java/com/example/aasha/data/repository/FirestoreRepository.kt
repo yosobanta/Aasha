@@ -12,31 +12,32 @@ class FirestoreRepository @Inject constructor(
 ) {
     suspend fun isAashaIdTaken(aashaId: String): Boolean {
         return try {
-            val query = firestore.collection("users")
-                .whereEqualTo("aashaId", aashaId)
-                .get()
-                .await()
-            !query.isEmpty
+            firestore.collection("users").document(aashaId).get().await().exists()
         } catch (e: Exception) {
             false
         }
     }
 
     suspend fun saveUser(user: User) {
-        firestore.collection("users")
-            .document(user.uid)
-            .set(user)
-            .await()
+        val userRef = firestore.collection("users").document(user.aashaId)
+        
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(userRef)
+            if (snapshot.exists()) {
+                throw Exception("AashaID already taken")
+            }
+            transaction.set(userRef, user)
+        }.await()
     }
 
     suspend fun getUserByAashaId(aashaId: String): User? {
-        val query = firestore.collection("users")
-            .whereEqualTo("aashaId", aashaId)
-            .get()
-            .await()
-        return if (!query.isEmpty) {
-            query.documents[0].toObject(User::class.java)
-        } else {
+        return try {
+            firestore.collection("users")
+                .document(aashaId)
+                .get()
+                .await()
+                .toObject(User::class.java)
+        } catch (e: Exception) {
             null
         }
     }

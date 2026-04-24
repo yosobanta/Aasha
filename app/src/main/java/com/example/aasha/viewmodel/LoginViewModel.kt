@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 sealed class LoginUiState {
@@ -29,16 +30,17 @@ class LoginViewModel @Inject constructor(
     private val firestoreRepository: FirestoreRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun signUp(aashaId: String, email: String, password: String, locality: String) {
+    fun signUp(name: String, aashaId: String, email: String, password: String, locality: String) {
         _uiState.value = LoginUiState.Loading
         viewModelScope.launch {
+            val normalizedAashaId = aashaId.trim().lowercase(Locale.ROOT)
             try {
-                // 1. Check if AashaID already exists
-                if (firestoreRepository.isAashaIdTaken(aashaId)) {
+                // 1. Check if AashaID already exists (Double check before Auth)
+                if (firestoreRepository.isAashaIdTaken(normalizedAashaId)) {
                     _uiState.value = LoginUiState.Error("AashaID already taken")
                     return@launch
                 }
@@ -50,7 +52,8 @@ class LoginViewModel @Inject constructor(
                 // 3. Store user in Firestore
                 val user = User(
                     uid = uid,
-                    aashaId = aashaId,
+                    name = name,
+                    aashaId = normalizedAashaId,
                     email = email,
                     locality = locality,
                     createdAt = Timestamp.now()
@@ -58,15 +61,14 @@ class LoginViewModel @Inject constructor(
                 try {
                     firestoreRepository.saveUser(user)
                 } catch (e: Exception) {
-                    // 🔥 ROLLBACK AUTH USER
+                    // 🔥 ROLLBACK AUTH USER if Firestore write fails
                     authRepository.deleteCurrentUser()
-                    throw Exception("Failed to save user. Please try again.")
+                    throw e
                 }
 
-
                 // 4. Save session locally
-                sessionManager.saveSession(aashaId, email, locality)
-                
+                sessionManager.saveSession(normalizedAashaId, name, email, locality)
+
                 _uiState.value = LoginUiState.RegistrationSuccess
             } catch (e: Exception) {
                 _uiState.value = LoginUiState.Error(e.message ?: "Sign-up failed")
@@ -77,17 +79,18 @@ class LoginViewModel @Inject constructor(
     fun loginWithAashaId(aashaId: String, password: String) {
         _uiState.value = LoginUiState.Loading
         viewModelScope.launch {
+            val normalizedAashaId = aashaId.trim().lowercase(Locale.ROOT)
             try {
                 // 1. Query Firestore to get email using AashaID
-                val user = firestoreRepository.getUserByAashaId(aashaId)
+                val user = firestoreRepository.getUserByAashaId(normalizedAashaId)
                     ?: throw Exception("Aasha ID not found")
 
                 // 2. Use retrieved email to login via Firebase Auth
                 authRepository.signIn(user.email, password)
 
                 // 3. Cache locally
-                sessionManager.saveSession(user.aashaId, user.email, user.locality)
-                
+                sessionManager.saveSession(user.aashaId, user.name, user.email, user.locality)
+
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
                 _uiState.value = LoginUiState.Error(e.message ?: "Invalid Aasha ID or Password")
@@ -128,5 +131,9 @@ class LoginViewModel @Inject constructor(
             authRepository.signOut()
             _uiState.value = LoginUiState.Idle
         }
+    }
+
+    fun hasMpin(): Boolean {
+        return sessionManager.hasMpin()
     }
 }

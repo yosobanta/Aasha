@@ -22,6 +22,9 @@ import androidx.navigation.NavController
 import com.example.aasha.domain.model.Patient
 import com.example.aasha.ui.navigation.Screen
 import com.example.aasha.viewmodel.DashboardViewModel
+import kotlinx.coroutines.flow.collectLatest
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun DashboardScreen(
@@ -30,67 +33,91 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        // Header
-        item {
-            HeaderSection(uiState.ashaName, uiState.area, uiState.isOnline)
+    LaunchedEffect(Unit) {
+        viewModel.syncEvents.collectLatest { message ->
+            snackbarHostState.showSnackbar(message)
         }
+    }
 
-        // Stats Cards
-        item {
-            StatsSection(
-                uiState.appointmentsToday, 
-                uiState.vaccinationsDue, 
-                uiState.patients.size,
-                onPatientsClick = { navController.navigate(Screen.PatientList.route) }
-            )
-        }
-
-        // Search Bar
-        item {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { viewModel.onSearchQueryChange(it) },
-                placeholder = { Text("Search Patients") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            )
-        }
-
-        if (searchQuery.isNotEmpty()) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // Header
             item {
-                Text("Search Results", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            }
-            items(uiState.patients) { patient ->
-                PatientItem(patient) {
-                    navController.navigate(Screen.PatientDetail.createRoute(patient.id))
-                }
-            }
-        } else {
-            // Quick Actions
-            item {
-                QuickActionsSection(navController)
-            }
-
-            // Today's Tasks
-            item {
-                Text("Today's Tasks", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            }
-
-            items(uiState.tasks) { task ->
-                TaskItem(
-                    task.patientName,
-                    task.taskType,
-                    task.isCompleted,
-                    onToggle = { viewModel.toggleTask(task.id) }
+                HeaderSection(
+                    uiState.ashaName, 
+                    uiState.area, 
+                    uiState.isSyncing
                 )
+            }
+
+            // Sync Status Details
+            item {
+                SyncInfoSection(uiState.pendingCount, uiState.lastSyncTime)
+            }
+
+            // Stats Cards
+            item {
+                StatsSection(
+                    uiState.appointmentsToday, 
+                    uiState.vaccinationsDue, 
+                    uiState.patients.size,
+                    onPatientsClick = { navController.navigate(Screen.PatientList.route) }
+                )
+            }
+
+            // Search Bar
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    placeholder = { Text("Search Patients") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+
+            if (searchQuery.isNotEmpty()) {
+                item {
+                    Text("Search Results", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                }
+                items(uiState.patients) { patient ->
+                    PatientItem(patient) {
+                        navController.navigate(Screen.PatientDetail.createRoute(patient.id))
+                    }
+                }
+            } else {
+                // Quick Actions
+                item {
+                    QuickActionsSection(navController, uiState.isSyncing) {
+                        viewModel.triggerSync()
+                    }
+                }
+
+                // Today's Tasks
+                item {
+                    Text("Today's Tasks", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+
+                items(uiState.tasks) { task ->
+                    TaskItem(
+                        task.patientName,
+                        task.taskType,
+                        task.isCompleted,
+                        onToggle = { viewModel.toggleTask(task.id) }
+                    )
+                }
             }
         }
     }
@@ -126,41 +153,91 @@ fun PatientItem(patient: Patient, onClick: () -> Unit) {
 }
 
 @Composable
-fun HeaderSection(name: String, area: String, isOnline: Boolean) {
+fun HeaderSection(name: String, area: String, isSyncing: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(text = "Namaste,", fontSize = 16.sp, color = MaterialTheme.colorScheme.secondary)
-            Text(text = name, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(text = "Namaste, $name", fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text(text = area, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
         
         // Sync Status Indicator
         Surface(
-            color = if (isOnline) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+            color = if (isSyncing) Color(0xFFE3F2FD) else Color(0xFFE8F5E9),
             shape = CircleShape
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(if (isOnline) Color.Green else Color.Red, CircleShape)
-                )
+                if (isSyncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(12.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(Color.Green, CircleShape)
+                    )
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isOnline) "Online" else "Offline",
+                    text = if (isSyncing) "Syncing..." else "Synced",
                     fontSize = 12.sp,
-                    color = if (isOnline) Color(0xFF2E7D32) else Color(0xFFC62828)
+                    color = if (isSyncing) MaterialTheme.colorScheme.primary else Color(0xFF2E7D32)
                 )
             }
         }
     }
+}
+
+@Composable
+fun SyncInfoSection(pendingCount: Int, lastSyncTime: Long) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.CloudUpload, 
+                    contentDescription = null, 
+                    tint = if (pendingCount > 0) Color(0xFFF57C00) else Color.Gray,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = if (pendingCount > 0) "$pendingCount items pending" else "All data synced",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Text(
+                text = if (lastSyncTime > 0) "Last: ${formatTimestamp(lastSyncTime)}" else "Never synced",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+fun formatTimestamp(timestamp: Long): String {
+    val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    return sdf.format(Date(timestamp))
 }
 
 @Composable
@@ -194,7 +271,7 @@ fun StatCard(label: String, value: String, bgColor: Color, modifier: Modifier, o
 }
 
 @Composable
-fun QuickActionsSection(navController: NavController) {
+fun QuickActionsSection(navController: NavController, isSyncing: Boolean, onSyncClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -202,17 +279,28 @@ fun QuickActionsSection(navController: NavController) {
         QuickActionButton("New Patient", Icons.Default.Add, Modifier.weight(1f)) {
             navController.navigate(Screen.AddPatient.route)
         }
-        QuickActionButton("Sync Now", Icons.Default.Sync, Modifier.weight(1f)) {
-            // Sync logic
-        }
+        QuickActionButton(
+            label = if (isSyncing) "Syncing..." else "Sync Now", 
+            icon = Icons.Default.Sync, 
+            modifier = Modifier.weight(1f),
+            enabled = !isSyncing,
+            onClick = onSyncClick
+        )
     }
 }
 
 @Composable
-fun QuickActionButton(label: String, icon: ImageVector, modifier: Modifier, onClick: () -> Unit) {
+fun QuickActionButton(
+    label: String, 
+    icon: ImageVector, 
+    modifier: Modifier, 
+    enabled: Boolean = true,
+    onClick: () -> Unit
+) {
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
+        enabled = enabled,
         shape = RoundedCornerShape(12.dp),
         contentPadding = PaddingValues(vertical = 12.dp)
     ) {

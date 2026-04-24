@@ -22,7 +22,6 @@ import com.example.aasha.ui.navigation.BottomNavItem
 import com.example.aasha.ui.navigation.Screen
 import com.example.aasha.ui.screens.dashboard.DashboardScreen
 import com.example.aasha.ui.screens.login.LoginScreen
-import com.example.aasha.ui.screens.login.LoginMpinScreen
 import com.example.aasha.ui.screens.profile.ProfileScreen
 import com.example.aasha.ui.screens.splash.SplashScreen
 import com.example.aasha.ui.screens.appointment.AppointmentScreen
@@ -118,18 +117,24 @@ fun MainScreen(
                 )
             }
             composable(Screen.Login.route) {
-                LoginScreen(onLoginSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.Login.route) { inclusive = true }
-                    }
-                })
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
+                    showMpinInitially = false
+                )
             }
             composable(Screen.LoginMpin.route) {
-                LoginMpinScreen(onVerificationSuccess = {
-                    navController.navigate(Screen.Dashboard.route) {
-                        popUpTo(Screen.LoginMpin.route) { inclusive = true }
-                    }
-                })
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.LoginMpin.route) { inclusive = true }
+                        }
+                    },
+                    showMpinInitially = true
+                )
             }
             composable(Screen.Dashboard.route) {
                 DashboardScreen(navController = navController)

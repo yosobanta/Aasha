@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1044211320484",
+    "project_id": "aasha-b6847",
+    "storage_bucket": "aasha-b6847.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044211320484:android:ed8c40e0444338a6f7c831",
+        "android_client_info": {
+          "package_name": "com.example.aasha"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2pNdopOvdxOvx6CawK8C0eIO5uxJGerE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

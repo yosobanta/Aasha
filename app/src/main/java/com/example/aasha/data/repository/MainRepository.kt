@@ -17,7 +17,6 @@ import javax.inject.Singleton
 
 @Singleton
 class MainRepository @Inject constructor(
-    private val patientDao: PatientDao,
     private val visitDao: VisitDao,
     private val vaccinationDao: VaccinationDao,
     private val appointmentDao: AppointmentDao,
@@ -26,7 +25,6 @@ class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     // Flows for real-time local data
-    val patients: Flow<List<Patient>> = patientDao.getAllPatients()
     val appointments: Flow<List<Appointment>> = appointmentDao.getAllAppointments()
 
     fun getVaccinationsByPatient(patientId: String): Flow<List<Vaccination>> = 
@@ -34,36 +32,6 @@ class MainRepository @Inject constructor(
 
     fun getVisitsByPatient(patientId: String): Flow<List<Visit>> = 
         visitDao.getVisitsByPatient(patientId)
-
-    // --- Patient Operations ---
-
-    suspend fun savePatient(patient: Patient) {
-        val workerId = sessionManager.workerId.first() ?: ""
-        val patientWithWorkerId = patient.copy(
-            workerId = workerId,
-            lastUpdated = System.currentTimeMillis(),
-            syncStatus = SyncStatus.PENDING
-        )
-        patientDao.insertPatient(patientWithWorkerId)
-        triggerOneTimeSync()
-    }
-
-    suspend fun updatePatient(patient: Patient) {
-        val updatedPatient = patient.copy(
-            lastUpdated = System.currentTimeMillis(),
-            syncStatus = SyncStatus.PENDING
-        )
-        patientDao.updatePatient(updatedPatient)
-        triggerOneTimeSync()
-    }
-
-    suspend fun getPatientById(id: String): Patient? = patientDao.getPatientById(id)
-
-    suspend fun isDuplicate(name: String, village: String, age: Int): Patient? {
-        return patientDao.findDuplicate(name, village, age - 2, age + 2)
-    }
-
-    fun searchPatients(query: String): Flow<List<Patient>> = patientDao.searchPatients(query)
 
     // --- Appointment Operations ---
 
@@ -97,32 +65,6 @@ class MainRepository @Inject constructor(
     // --- Sync Logic (Conflict Resolution: Last-Write-Wins) ---
 
     suspend fun syncLocalWithRemote() {
-        val pendingPatients = patientDao.getPatientsBySyncStatus(SyncStatus.PENDING)
-        pendingPatients.forEach { patient ->
-            try {
-                // Check remote version first
-                val remoteDoc = firestore.collection("patients").document(patient.id).get().await()
-                val remoteLastUpdated = remoteDoc.getLong("lastUpdated") ?: 0L
-                
-                if (patient.lastUpdated >= remoteLastUpdated) {
-                    // Local is newer or same, push to remote
-                    firestore.collection("patients").document(patient.id)
-                        .set(patient.copy(syncStatus = SyncStatus.SYNCED), SetOptions.merge())
-                        .await()
-                    patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.SYNCED))
-                } else {
-                    // Remote is newer, pull to local
-                    val remotePatient = remoteDoc.toObject(Patient::class.java)
-                    if (remotePatient != null) {
-                        patientDao.insertPatient(remotePatient.copy(syncStatus = SyncStatus.SYNCED))
-                    }
-                }
-            } catch (e: Exception) {
-                patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.ERROR))
-            }
-        }
-
-        // Similar logic for appointments, visits, vaccinations...
         val pendingAppointments = appointmentDao.getAppointmentsBySyncStatus(SyncStatus.PENDING)
         pendingAppointments.forEach { appointment ->
             try {
@@ -152,7 +94,7 @@ class MainRepository @Inject constructor(
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             "one_time_sync",
-            ExistingWorkPolicy.REPLACE,
+            ExistingWorkPolicy.KEEP,
             syncRequest
         )
     }

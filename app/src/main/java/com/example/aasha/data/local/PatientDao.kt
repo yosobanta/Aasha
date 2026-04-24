@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PatientDao {
-    @Query("SELECT * FROM patients ORDER BY createdAt DESC")
+    @Query("SELECT * FROM patients WHERE isDeleted = 0 ORDER BY createdAt DESC")
     fun getAllPatients(): Flow<List<Patient>>
 
     @Query("SELECT * FROM patients WHERE syncStatus = :status")
@@ -19,12 +19,15 @@ interface PatientDao {
     @Update
     suspend fun updatePatient(patient: Patient)
 
-    @Query("SELECT * FROM patients WHERE name = :name AND village = :village AND age BETWEEN :minAge AND :maxAge LIMIT 1")
+    @Query("SELECT * FROM patients WHERE isDeleted = 0 AND name = :name AND village = :village AND age BETWEEN :minAge AND :maxAge LIMIT 1")
     suspend fun findDuplicate(name: String, village: String, minAge: Int, maxAge: Int): Patient?
 
     @Query("SELECT * FROM patients WHERE id = :id")
     suspend fun getPatientById(id: String): Patient?
 
-    @Query("SELECT * FROM patients WHERE name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%'")
+    @Query("SELECT COUNT(*) FROM patients WHERE syncStatus != 'SYNCED'")
+    fun getPendingCount(): Flow<Int>
+
+    @Query("SELECT * FROM patients WHERE isDeleted = 0 AND (name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%') ORDER BY createdAt DESC")
     fun searchPatients(query: String): Flow<List<Patient>>
 }

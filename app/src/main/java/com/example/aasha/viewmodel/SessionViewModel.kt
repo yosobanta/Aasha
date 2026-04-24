@@ -17,7 +17,7 @@ class SessionViewModel @Inject constructor(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = true
+            initialValue = false
         )
 
     val language: StateFlow<String> = sessionManager.language

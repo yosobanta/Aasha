@@ -3,6 +3,7 @@ package com.example.aasha.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aasha.data.repository.MainRepository
+import com.example.aasha.data.repository.PatientRepository
 import com.example.aasha.domain.model.Patient
 import com.example.aasha.domain.model.Vaccination
 import com.example.aasha.domain.model.Visit
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PatientViewModel @Inject constructor(
-    private val repository: MainRepository
+    private val repository: MainRepository,
+    private val patientRepository: PatientRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -26,9 +28,9 @@ class PatientViewModel @Inject constructor(
     val patients: StateFlow<List<Patient>> = _searchQuery
         .flatMapLatest { query ->
             if (query.isEmpty()) {
-                repository.patients
+                patientRepository.patients
             } else {
-                repository.searchPatients(query)
+                patientRepository.searchPatients(query)
             }
         }
         .stateIn(
@@ -61,7 +63,19 @@ class PatientViewModel @Inject constructor(
 
     fun addPatient(patient: Patient) {
         viewModelScope.launch {
-            repository.savePatient(patient)
+            patientRepository.addPatient(patient)
+        }
+    }
+
+    fun updatePatient(patient: Patient) {
+        viewModelScope.launch {
+            patientRepository.updatePatient(patient)
+        }
+    }
+
+    fun deletePatient(patientId: String) {
+        viewModelScope.launch {
+            patientRepository.deletePatient(patientId)
         }
     }
 
@@ -78,6 +92,6 @@ class PatientViewModel @Inject constructor(
     }
 
     suspend fun isDuplicate(name: String, village: String, age: Int): Patient? {
-        return repository.isDuplicate(name, village, age)
+        return patientRepository.isDuplicate(name, village, age)
     }
 }

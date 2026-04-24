@@ -35,18 +35,26 @@ class SessionManager @Inject constructor(
 
     companion object {
         private val WORKER_ID = stringPreferencesKey("worker_id")
+        private val NAME = stringPreferencesKey("name")
         private val EMAIL = stringPreferencesKey("email")
         private val LOCALITY = stringPreferencesKey("locality")
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val LANGUAGE = stringPreferencesKey("language")
+        private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
         private const val MPIN_HASH_KEY = "user_mpin_hash"
     }
 
     val workerId: Flow<String?> = dataStore.data.map { it[WORKER_ID] }
+    val name: Flow<String?> = dataStore.data.map { it[NAME] }
     val email: Flow<String?> = dataStore.data.map { it[EMAIL] }
     val locality: Flow<String?> = dataStore.data.map { it[LOCALITY] }
     val isLoggedIn: Flow<Boolean> = dataStore.data.map { it[IS_LOGGED_IN] ?: false }
     val language: Flow<String> = dataStore.data.map { it[LANGUAGE] ?: "en" }
+    val lastSyncTime: Flow<Long> = dataStore.data.map { it[LAST_SYNC_TIME] ?: 0L }
+
+    fun hasMpin(): Boolean {
+        return encryptedPrefs.getString(MPIN_HASH_KEY, null) != null
+    }
 
     fun verifyMpin(pin: String): Boolean {
         val savedHash = encryptedPrefs.getString(MPIN_HASH_KEY, null)
@@ -64,9 +72,10 @@ class SessionManager @Inject constructor(
         return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 
-    suspend fun saveSession(workerId: String, email: String, locality: String) {
+    suspend fun saveSession(workerId: String, name: String, email: String, locality: String) {
         dataStore.edit { preferences ->
             preferences[WORKER_ID] = workerId
+            preferences[NAME] = name
             preferences[EMAIL] = email
             preferences[LOCALITY] = locality
             preferences[IS_LOGGED_IN] = true
@@ -76,6 +85,12 @@ class SessionManager @Inject constructor(
     suspend fun saveLanguage(language: String) {
         dataStore.edit { preferences ->
             preferences[LANGUAGE] = language
+        }
+    }
+    
+    suspend fun updateLastSyncTime(time: Long) {
+        dataStore.edit { preferences ->
+            preferences[LAST_SYNC_TIME] = time
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.aasha.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aasha.data.repository.MainRepository
+import com.example.aasha.data.repository.PatientRepository
 import com.example.aasha.domain.model.Appointment
 import com.example.aasha.domain.model.Patient
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,7 +18,8 @@ sealed class BookingResult {
 
 @HiltViewModel
 class AppointmentViewModel @Inject constructor(
-    private val repository: MainRepository
+    private val repository: MainRepository,
+    private val patientRepository: PatientRepository
 ) : ViewModel() {
     
     val appointments: StateFlow<List<Appointment>> = repository.appointments
@@ -27,7 +29,7 @@ class AppointmentViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
-    val patients: StateFlow<List<Patient>> = repository.patients
+    val patients: StateFlow<List<Patient>> = patientRepository.patients
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
