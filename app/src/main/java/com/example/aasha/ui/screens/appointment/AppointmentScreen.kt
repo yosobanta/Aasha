@@ -33,6 +33,20 @@ fun AppointmentScreen(
     val bookingResult by viewModel.bookingResult.collectAsState()
     
     var selectedPatient by remember { mutableStateOf<Patient?>(null) }
+    val today = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+
+    val maxDate = Calendar.getInstance().apply {
+        add(Calendar.DAY_OF_YEAR, 45)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
     var selectedDate by remember { mutableStateOf(Calendar.getInstance().apply { 
         set(Calendar.HOUR_OF_DAY, 0)
         set(Calendar.MINUTE, 0)
@@ -44,8 +58,15 @@ fun AppointmentScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showConfirmation by remember { mutableStateOf(false) }
 
-    val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
-
+    //val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
+    val datePickerState = rememberDatePickerState(
+        initialSelectedDateMillis = selectedDate,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                return utcTimeMillis in today.timeInMillis..maxDate.timeInMillis
+            }
+        }
+    )
     LaunchedEffect(bookingResult) {
         if (bookingResult is BookingResult.Success) {
             showConfirmation = true
