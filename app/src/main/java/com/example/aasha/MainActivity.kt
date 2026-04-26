@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -26,10 +27,14 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             
             // Apply locale when language changes
-            LocaleHelper.applyLocale(context, language)
+            val wrappedContext = androidx.compose.runtime.remember(language) {
+                LocaleHelper.wrapContext(context, language)
+            }
             
-            AashaTheme {
-                MainScreen()
+            CompositionLocalProvider(LocalContext provides wrappedContext) {
+                AashaTheme {
+                    MainScreen()
+                }
             }
         }
     }

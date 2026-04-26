@@ -18,6 +18,9 @@ import com.example.aasha.domain.model.Patient
 import com.example.aasha.viewmodel.PatientViewModel
 import kotlinx.coroutines.launch
 
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPatientScreen(
@@ -41,10 +44,10 @@ fun AddPatientScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add New Patient") },
+                title = { Text(stringResource(R.string.add_new_patient)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )
@@ -63,19 +66,19 @@ fun AddPatientScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Full Name *") },
+                label = { Text(stringResource(R.string.full_name_required)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = age,
                 onValueChange = { if (it.all { char -> char.isDigit() }) age = it },
-                label = { Text("Age *") },
+                label = { Text(stringResource(R.string.age_required)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Text("Gender *", fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.gender_required), fontWeight = FontWeight.Medium)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -86,12 +89,12 @@ fun AddPatientScreen(
                         gender = "Male"
                         isPregnant = null
                     },
-                    label = { Text("Male") }
+                    label = { Text(stringResource(R.string.male)) }
                 )
                 FilterChip(
                     selected = gender == "Female",
                     onClick = { gender = "Female" },
-                    label = { Text("Female") }
+                    label = { Text(stringResource(R.string.female)) }
                 )
                 FilterChip(
                     selected = gender == "Other",
@@ -99,7 +102,7 @@ fun AddPatientScreen(
                         gender = "Other"
                         isPregnant = null
                     },
-                    label = { Text("Other") }
+                    label = { Text(stringResource(R.string.other)) }
                 )
             }
 
@@ -109,21 +112,21 @@ fun AddPatientScreen(
                         checked = isPregnant == true,
                         onCheckedChange = { isPregnant = it }
                     )
-                    Text("Is Pregnant?")
+                    Text(stringResource(R.string.is_pregnant))
                 }
             }
 
             OutlinedTextField(
                 value = village,
                 onValueChange = { village = it },
-                label = { Text("Village/Area *") },
+                label = { Text(stringResource(R.string.village_required)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = phone,
                 onValueChange = { if (it.length <= 10 && it.all { char -> char.isDigit() }) phone = it },
-                label = { Text("Phone Number (Optional)") },
+                label = { Text(stringResource(R.string.phone_optional)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -131,7 +134,7 @@ fun AddPatientScreen(
             OutlinedTextField(
                 value = guardianName,
                 onValueChange = { guardianName = it },
-                label = { Text("Guardian Name (Optional)") },
+                label = { Text(stringResource(R.string.guardian_optional)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -159,7 +162,7 @@ fun AddPatientScreen(
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                 enabled = name.isNotBlank() && age.isNotBlank() && gender.isNotBlank() && village.isNotBlank()
             ) {
-                Text("Save Patient")
+                Text(stringResource(R.string.save_patient))
             }
         }
     }
@@ -167,24 +170,25 @@ fun AddPatientScreen(
     if (showDuplicateDialog) {
         AlertDialog(
             onDismissRequest = { showDuplicateDialog = false },
-            title = { Text("Possible Duplicate Found") },
-            text = { Text("A similar patient (${duplicatePatient?.name}, ${duplicatePatient?.age} yrs) already exists in ${duplicatePatient?.village}. Continue?") },
+            title = { Text(stringResource(R.string.duplicate_found)) },
+            text = { Text(stringResource(R.string.duplicate_msg, duplicatePatient?.name ?: "", duplicatePatient?.age ?: 0, duplicatePatient?.village ?: "")) },
             confirmButton = {
                 TextButton(onClick = {
                     showDuplicateDialog = false
                     savePatient(viewModel, name, age.toInt(), gender, village, phone, guardianName, isPregnant, onBack)
                 }) {
-                    Text("Continue Anyway")
+                    Text(stringResource(R.string.continue_anyway))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDuplicateDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
 }
+
 
 private fun savePatient(
     viewModel: PatientViewModel,

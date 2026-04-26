@@ -8,10 +8,10 @@ import java.util.UUID
 data class Visit(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val patientId: String,
-    val patientName: String,
+    val patientId: String = "",
+    val patientName: String = "",
     val visitDate: Long = System.currentTimeMillis(),
-    val reason: String,
+    val reason: String = "",
     val observations: String = "",
     val treatment: String = "",
     val lastUpdated: Long = System.currentTimeMillis(),

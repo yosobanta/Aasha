@@ -32,6 +32,8 @@ import com.example.aasha.ui.screens.vaccination.VaccinationScreen
 import com.example.aasha.ui.screens.visit.VisitScreen
 import com.example.aasha.viewmodel.PatientViewModel
 import com.example.aasha.viewmodel.SessionViewModel
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,10 +75,11 @@ fun MainScreen(
                 NavigationBar {
                     bottomBarScreens.forEach { item ->
                         val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                        val title = stringResource(item.titleResId)
                         
                         NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title) },
+                            icon = { Icon(item.icon, contentDescription = title) },
+                            label = { Text(title) },
                             selected = selected,
                             onClick = {
                                 if (item.route == "add_modal") {
@@ -182,10 +185,10 @@ fun MainScreen(
                 AddOptionsContent(onOptionSelected = { option ->
                     showBottomSheet = false
                     when (option) {
-                        "Add New Patient" -> navController.navigate(Screen.AddPatient.route)
-                        "New Appointment" -> navController.navigate(Screen.Appointment.route)
-                        "Record Vaccination" -> navController.navigate(Screen.Vaccination.route)
-                        "Add Visit" -> navController.navigate(Screen.Visit.route)
+                        "add_patient" -> navController.navigate(Screen.AddPatient.route)
+                        "appointment" -> navController.navigate(Screen.Appointment.route)
+                        "vaccination" -> navController.navigate(Screen.Vaccination.route)
+                        "visit" -> navController.navigate(Screen.Visit.route)
                     }
                 })
             }
@@ -202,14 +205,14 @@ fun AddOptionsContent(onOptionSelected: (String) -> Unit) {
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Quick Actions",
+            text = stringResource(R.string.quick_actions),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-        AddOptionItem("Add New Patient", Icons.Default.Add) { onOptionSelected("Add New Patient") }
-        AddOptionItem("New Appointment", Icons.Default.Add) { onOptionSelected("New Appointment") }
-        AddOptionItem("Record Vaccination", Icons.Default.Add) { onOptionSelected("Record Vaccination") }
-        AddOptionItem("Add Visit", Icons.Default.Add) { onOptionSelected("Add Visit") }
+        AddOptionItem(stringResource(R.string.add_new_patient), Icons.Default.Add) { onOptionSelected("add_patient") }
+        AddOptionItem(stringResource(R.string.new_appointment), Icons.Default.Add) { onOptionSelected("appointment") }
+        AddOptionItem(stringResource(R.string.record_vaccination), Icons.Default.Add) { onOptionSelected("vaccination") }
+        AddOptionItem(stringResource(R.string.add_visit), Icons.Default.Add) { onOptionSelected("visit") }
         Spacer(modifier = Modifier.height(24.dp))
     }
 }

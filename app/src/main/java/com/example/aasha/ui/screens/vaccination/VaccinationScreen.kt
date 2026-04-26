@@ -14,6 +14,8 @@ import com.example.aasha.domain.model.Patient
 import com.example.aasha.domain.model.Vaccination
 import com.example.aasha.viewmodel.PatientViewModel
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,10 +35,10 @@ fun VaccinationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Record Vaccination") },
+                title = { Text(stringResource(R.string.record_vaccination)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )
@@ -50,14 +52,14 @@ fun VaccinationScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Select Patient", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_patient), style = MaterialTheme.typography.titleMedium)
             PatientDropdown(
                 patients = patients,
                 selectedPatient = selectedPatient,
                 onPatientSelected = { selectedPatient = it }
             )
 
-            Text("Vaccine Information", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.vaccine_info), style = MaterialTheme.typography.titleMedium)
             
             var expanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -67,7 +69,7 @@ fun VaccinationScreen(
                 OutlinedTextField(
                     value = vaccineName,
                     onValueChange = { vaccineName = it },
-                    label = { Text("Vaccine Name") },
+                    label = { Text(stringResource(R.string.vaccine_name)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -90,14 +92,14 @@ fun VaccinationScreen(
             OutlinedTextField(
                 value = doseNumber,
                 onValueChange = { doseNumber = it },
-                label = { Text("Dose Number (e.g., 1st, Booster)") },
+                label = { Text(stringResource(R.string.dose_number)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = notes,
                 onValueChange = { notes = it },
-                label = { Text("Additional Notes") },
+                label = { Text(stringResource(R.string.additional_notes)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -123,7 +125,7 @@ fun VaccinationScreen(
                 enabled = selectedPatient != null && vaccineName.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Save Vaccination Record")
+                Text(stringResource(R.string.save_vaccination))
             }
         }
     }
@@ -143,7 +145,7 @@ fun PatientDropdown(
         onExpandedChange = { expanded = !expanded }
     ) {
         OutlinedTextField(
-            value = selectedPatient?.name ?: "Select a patient",
+            value = selectedPatient?.name ?: stringResource(R.string.select_a_patient),
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

@@ -8,9 +8,9 @@ import java.util.UUID
 data class Appointment(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val patientId: String,
-    val patientName: String,
-    val dateTime: Long,
+    val patientId: String = "",
+    val patientName: String = "",
+    val dateTime: Long = 0L,
     val lastUpdated: Long = System.currentTimeMillis(),
     val syncStatus: SyncStatus = SyncStatus.PENDING
 )

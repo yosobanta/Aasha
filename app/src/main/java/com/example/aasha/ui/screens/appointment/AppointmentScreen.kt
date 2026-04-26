@@ -20,6 +20,8 @@ import com.example.aasha.viewmodel.AppointmentViewModel
 import com.example.aasha.viewmodel.BookingResult
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,10 +56,10 @@ fun AppointmentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Schedule Appointment") },
+                title = { Text(stringResource(R.string.schedule_appointment)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )
@@ -72,7 +74,7 @@ fun AppointmentScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Patient Selection
-            Text("Select Patient", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_patient), style = MaterialTheme.typography.titleMedium)
             PatientDropdown(
                 patients = patients,
                 selectedPatient = selectedPatient,
@@ -80,7 +82,7 @@ fun AppointmentScreen(
             )
 
             // Date Selection
-            Text("Select Date", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_date), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(
                 onClick = { showDatePicker = true },
                 modifier = Modifier.fillMaxWidth()
@@ -89,7 +91,7 @@ fun AppointmentScreen(
             }
 
             // Time Slot Selection
-            Text("Select Time Slot", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_time_slot), style = MaterialTheme.typography.titleMedium)
             TimeSlotGrid(
                 selectedDate = selectedDate,
                 selectedTimeSlot = selectedTimeSlot,
@@ -110,7 +112,7 @@ fun AppointmentScreen(
                 enabled = selectedPatient != null && selectedTimeSlot != null,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Confirm Booking")
+                Text(stringResource(R.string.confirm_booking))
             }
         }
     }
@@ -126,7 +128,7 @@ fun AppointmentScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         ) {
@@ -137,14 +139,14 @@ fun AppointmentScreen(
     if (showConfirmation) {
         AlertDialog(
             onDismissRequest = { showConfirmation = false },
-            title = { Text("Success") },
-            text = { Text("Appointment booked successfully!") },
+            title = { Text(stringResource(R.string.success)) },
+            text = { Text(stringResource(R.string.appointment_success)) },
             confirmButton = {
                 TextButton(onClick = { 
                     showConfirmation = false
                     onBack()
                 }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )
@@ -153,11 +155,11 @@ fun AppointmentScreen(
     if (bookingResult is BookingResult.Error) {
         AlertDialog(
             onDismissRequest = { viewModel.clearBookingResult() },
-            title = { Text("Error") },
+            title = { Text(stringResource(R.string.error)) },
             text = { Text((bookingResult as BookingResult.Error).message) },
             confirmButton = {
                 TextButton(onClick = { viewModel.clearBookingResult() }) {
-                    Text("OK")
+                    Text(stringResource(R.string.ok))
                 }
             }
         )
@@ -178,7 +180,7 @@ fun PatientDropdown(
         onExpandedChange = { expanded = !expanded }
     ) {
         OutlinedTextField(
-            value = selectedPatient?.name ?: "Select a patient",
+            value = selectedPatient?.name ?: stringResource(R.string.select_a_patient),
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },

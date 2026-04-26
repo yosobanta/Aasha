@@ -1,3 +1,142 @@
 <resources>
     <string name="app_name">Aasha</string>
+    
+    <!-- Profile Screen -->
+    <string name="performance_summary">Performance Summary</string>
+    <string name="patients">Patients</string>
+    <string name="visits">Visits</string>
+    <string name="vaccines">Vaccines</string>
+    <string name="meds">Meds</string>
+    <string name="language_selection">Language Selection</string>
+    <string name="sync_status">Sync Status</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="logout">Logout</string>
+    <string name="logout_confirm_title">Logout</string>
+    <string name="logout_confirm_msg">Are you sure you want to logout? You will need to enter your MPIN to login again.</string>
+    <string name="cancel">Cancel</string>
+    <string name="select_language">Select Language</string>
+    <string name="close">Close</string>
+    <string name="last_synced">Last Synced:</string>
+    <string name="pending_items">Pending Items:</string>
+    <string name="syncing_in_progress">Syncing in progress…</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="syncing">Syncing…</string>
+    <string name="never">Never</string>
+    <string name="just_now">Just now</string>
+    <string name="mins_ago">%d mins ago</string>
+    <string name="hours_ago">%d hours ago</string>
+
+    <!-- Dashboard -->
+    <string name="namaste">Namaste, %s</string>
+    <string name="search_patients">Search Patients</string>
+    <string name="search_results">Search Results</string>
+    <string name="todays_tasks">Today\'s Tasks</string>
+    <string name="yrs_gender">%1$d yrs • %2$s</string>
+    <string name="sync_started">Sync Started</string>
+    <string name="sync_completed">Sync Completed</string>
+    <string name="sync_failed">Sync Failed</string>
+
+    <!-- Add Patient -->
+    <string name="add_new_patient">Add New Patient</string>
+    <string name="full_name_required">Full Name *</string>
+    <string name="age_required">Age *</string>
+    <string name="gender_required">Gender *</string>
+    <string name="male">Male</string>
+    <string name="female">Female</string>
+    <string name="other">Other</string>
+    <string name="is_pregnant">Is Pregnant?</string>
+    <string name="village_required">Village/Area *</string>
+    <string name="phone_optional">Phone Number (Optional)</string>
+    <string name="guardian_optional">Guardian Name (Optional)</string>
+    <string name="save_patient">Save Patient</string>
+    <string name="duplicate_found">Possible Duplicate Found</string>
+    <string name="duplicate_msg">A similar patient (%1$s, %2$d yrs) already exists in %3$s. Continue?</string>
+    <string name="continue_anyway">Continue Anyway</string>
+
+    <!-- Patient Detail -->
+    <string name="patient_profile">Patient Profile</string>
+    <string name="medical_history">Medical History</string>
+    <string name="no_records">No recent visits or vaccinations recorded.</string>
+    <string name="recent_visits">Recent Visits</string>
+    <string name="vaccinations">Vaccinations</string>
+    <string name="age">Age</string>
+    <string name="gender">Gender</string>
+    <string name="village">Village</string>
+    <string name="phone">Phone</string>
+    <string name="guardian">Guardian</string>
+    <string name="status">Status</string>
+    <string name="pregnant">Pregnant</string>
+
+    <!-- Login/Signup -->
+    <string name="aasha_id">Aasha ID</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="new_user_signup">New User? Sign Up Here</string>
+    <string name="full_name">Full Name</string>
+    <string name="email_address">Email Address</string>
+    <string name="set_password">Set Password</string>
+    <string name="serving_area">Serving Area / Locality</string>
+    <string name="signup">Sign Up</string>
+    <string name="already_have_account">Already have an account? Login</string>
+    <string name="mpin_setup_msg">Set a 4-digit PIN for quick access</string>
+    <string name="mpin_label">4-Digit MPIN</string>
+    <string name="set_mpin">Set MPIN</string>
+    <string name="mpin_entry_msg">Enter your MPIN to continue</string>
+    <string name="unlock_app">Unlock App</string>
+    <string name="use_id_instead">Use Aasha ID instead</string>
+
+    <!-- Appointment -->
+    <string name="schedule_appointment">Schedule Appointment</string>
+    <string name="select_patient">Select Patient</string>
+    <string name="select_date">Select Date</string>
+    <string name="select_time_slot">Select Time Slot</string>
+    <string name="confirm_booking">Confirm Booking</string>
+    <string name="ok">OK</string>
+    <string name="success">Success</string>
+    <string name="appointment_success">Appointment booked successfully!</string>
+    <string name="error">Error</string>
+
+    <!-- Vaccination/Visit -->
+    <string name="record_vaccination">Record Vaccination</string>
+    <string name="vaccine_info">Vaccine Information</string>
+    <string name="vaccine_name">Vaccine Name</string>
+    <string name="dose_number">Dose Number (e.g., 1st, Booster)</string>
+    <string name="additional_notes">Additional Notes</string>
+    <string name="save_vaccination">Save Vaccination Record</string>
+    <string name="record_visit">Record Patient Visit</string>
+    <string name="reason_for_visit">Reason for Visit</string>
+    <string name="observations">Observations / Symptoms</string>
+    <string name="treatment_advice">Treatment / Advice Given</string>
+    <string name="save_visit">Save Visit Record</string>
+    <string name="vaccine">Vaccine</string>
+    <string name="appts">Appts</string>
+    <string name="new_patient">New Patient</string>
+    <string name="synced">Synced</string>
+    <string name="items_pending">%d items pending</string>
+    <string name="all_data_synced">All data synced</string>
+    <string name="last_sync">Last: %s</string>
+    <string name="never_synced">Never synced</string>
+    <string name="select_a_patient">Select a patient</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="add">Add</string>
+    <string name="profile">Profile</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="new_appointment">New Appointment</string>
+    <string name="add_visit">Add Visit</string>
+    <string name="empowering_asha">Empowering ASHA Workers</string>
+    <string name="no_notes">No notes</string>
+    <string name="dose_prefix">Dose: %s</string>
+    <string name="worker_login">Worker Login</string>
+    <string name="create_account">Create Account</string>
+    <string name="setup_secure_mpin">Setup Secure MPIN</string>
+    <string name="enter_mpin">Enter MPIN</string>
+    <string name="id_cannot_empty">Aasha ID cannot be empty</string>
+    <string name="password_cannot_empty">Password cannot be empty</string>
+    <string name="name_cannot_empty">Name cannot be empty</string>
+    <string name="id_too_short">Aasha ID must be at least 4 characters</string>
+    <string name="email_invalid">Please enter a valid email</string>
+    <string name="password_too_short">Password must be at least 6 characters</string>
+    <string name="locality_cannot_empty">Locality cannot be empty</string>
+    <string name="mpin_invalid">MPIN must be exactly 4 digits</string>
+    <string name="account_setup_success">Account and MPIN set successfully!</string>
 </resources>

@@ -19,6 +19,9 @@ import com.example.aasha.viewmodel.PatientViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDetailScreen(
@@ -41,15 +44,15 @@ fun PatientDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Patient Profile") },
+                title = { Text(stringResource(R.string.patient_profile)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* Edit patient */ }) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edit")
+                        Icon(Icons.Default.Edit, contentDescription = null)
                     }
                 }
             )
@@ -70,37 +73,37 @@ fun PatientDetailScreen(
             ) {
                 item {
                     Text(text = p.name, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-                    Text(text = "ID: ${p.id.take(8)}", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
+                    Text(text = stringResource(id = R.string.aasha_id) + ": ${p.id.take(8)}", fontSize = 14.sp, color = MaterialTheme.colorScheme.secondary)
                 }
 
                 item {
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            InfoRow("Age", "${p.age} years")
-                            InfoRow("Gender", p.gender)
-                            InfoRow("Village", p.village)
-                            InfoRow("Phone", p.phone ?: "N/A")
-                            InfoRow("Guardian", p.guardianName ?: "N/A")
+                            InfoRow(stringResource(R.string.age), stringResource(R.string.yrs_gender, p.age, "").replace(" • ", ""))
+                            InfoRow(stringResource(R.string.gender), p.gender)
+                            InfoRow(stringResource(R.string.village), p.village)
+                            InfoRow(stringResource(R.string.phone), p.phone ?: "N/A")
+                            InfoRow(stringResource(R.string.guardian), p.guardianName ?: "N/A")
                             if (p.isPregnant == true) {
-                                InfoRow("Status", "Pregnant", color = MaterialTheme.colorScheme.primary)
+                                InfoRow(stringResource(R.string.status), stringResource(R.string.pregnant), color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
                 }
 
                 item {
-                    Text("Medical History", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.medical_history), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
                 
                 if (visits.isEmpty() && vaccinations.isEmpty()) {
                     item {
-                        Text("No recent visits or vaccinations recorded.", color = MaterialTheme.colorScheme.secondary)
+                        Text(stringResource(R.string.no_records), color = MaterialTheme.colorScheme.secondary)
                     }
                 } else {
                     // Visits Section
                     if (visits.isNotEmpty()) {
                         item {
-                            Text("Recent Visits", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+                            Text(stringResource(R.string.recent_visits), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
                         }
                         items(visits.size) { index ->
                             val visit = visits[index]
@@ -115,7 +118,7 @@ fun PatientDetailScreen(
                     // Vaccinations Section
                     if (vaccinations.isNotEmpty()) {
                         item {
-                            Text("Vaccinations", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
+                            Text(stringResource(R.string.vaccinations), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 8.dp))
                         }
                         items(vaccinations.size) { index ->
                             val vaccination = vaccinations[index]
@@ -132,6 +135,7 @@ fun PatientDetailScreen(
         }
     }
 }
+
 
 @Composable
 fun HistoryCard(

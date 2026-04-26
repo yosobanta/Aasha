@@ -1,6 +1,9 @@
 package com.example.aasha.ui.screens.profile
 
+import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -22,10 +25,14 @@ import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.*
 
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     
     var showLogoutDialog by remember { mutableStateOf(false) }
@@ -34,7 +41,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
 
     LaunchedEffect(Unit) {
         viewModel.syncEvents.collectLatest { message ->
-            snackbarHostState.showSnackbar(message)
+            val translatedMessage = when(message) {
+                "Sync Started" -> context.getString(R.string.sync_started)
+                "Sync Completed" -> context.getString(R.string.sync_completed)
+                "Sync Failed" -> context.getString(R.string.sync_failed)
+                else -> message
+            }
+            snackbarHostState.showSnackbar(translatedMessage)
         }
     }
 
@@ -80,16 +93,16 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Performance Summary", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        Text(stringResource(R.string.performance_summary), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            StatItem("Patients", uiState.totalPatients.toString(), Modifier.weight(1f))
-                            StatItem("Visits", uiState.totalVisits.toString(), Modifier.weight(1f))
+                            StatItem(stringResource(R.string.patients), uiState.totalPatients.toString(), Modifier.weight(1f))
+                            StatItem(stringResource(R.string.visits), uiState.totalVisits.toString(), Modifier.weight(1f))
                         }
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            StatItem("Vaccines", uiState.vaccinationsCompleted.toString(), Modifier.weight(1f))
-                            StatItem("Meds", uiState.medicinesDistributed.toString(), Modifier.weight(1f))
+                            StatItem(stringResource(R.string.vaccines), uiState.vaccinationsCompleted.toString(), Modifier.weight(1f))
+                            StatItem(stringResource(R.string.meds), uiState.medicinesDistributed.toString(), Modifier.weight(1f))
                         }
                     }
                 }
@@ -98,15 +111,15 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             // Settings / Options
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    SettingRow("Language Selection", Icons.Default.Language) { showLanguageDialog = true }
+                    SettingRow(stringResource(R.string.language_selection), Icons.Default.Language) { showLanguageDialog = true }
                     SettingRow(
-                        label = "Sync Status", 
+                        label = stringResource(R.string.sync_status), 
                         icon = Icons.Default.Sync,
                         badge = if (uiState.pendingCount > 0) uiState.pendingCount.toString() else null
                     ) { showSyncDialog = true }
-                    SettingRow("Notification Settings", Icons.Default.Notifications) { }
+                    SettingRow(stringResource(R.string.notification_settings), Icons.Default.Notifications) { }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    SettingRow("Logout", Icons.Default.ExitToApp, color = Color.Red) { showLogoutDialog = true }
+                    SettingRow(stringResource(R.string.logout), Icons.Default.ExitToApp, color = Color.Red) { showLogoutDialog = true }
                 }
             }
         }
@@ -115,19 +128,19 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to logout? You will need to enter your MPIN to login again.") },
+            title = { Text(stringResource(R.string.logout_confirm_title)) },
+            text = { Text(stringResource(R.string.logout_confirm_msg)) },
             confirmButton = {
                 TextButton(onClick = {
                     showLogoutDialog = false
                     viewModel.logout()
                 }) {
-                    Text("Logout", color = Color.Red)
+                    Text(stringResource(R.string.logout), color = Color.Red)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -136,7 +149,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     if (showLanguageDialog) {
         AlertDialog(
             onDismissRequest = { showLanguageDialog = false },
-            title = { Text("Select Language") },
+            title = { Text(stringResource(R.string.select_language)) },
             text = {
                 Column {
                     val languages = listOf(
@@ -151,6 +164,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(vertical = 8.dp)
+                                .clickable { viewModel.changeLanguage(langCode) }
                         ) {
                             RadioButton(
                                 selected = uiState.currentLanguage == langCode, 
@@ -163,7 +177,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             },
             confirmButton = {
                 TextButton(onClick = { showLanguageDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         )
@@ -172,18 +186,18 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
     if (showSyncDialog) {
         AlertDialog(
             onDismissRequest = { showSyncDialog = false },
-            title = { Text("Sync Status") },
+            title = { Text(stringResource(R.string.sync_status)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Last Synced:")
+                        Text(stringResource(R.string.last_synced))
                         Text(
-                            text = if (uiState.lastSyncTime > 0) getRelativeTime(uiState.lastSyncTime) else "Never",
+                            text = if (uiState.lastSyncTime > 0) getRelativeTime(uiState.lastSyncTime, context) else stringResource(R.string.never),
                             fontWeight = FontWeight.Bold
                         )
                     }
                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                        Text("Pending Items:")
+                        Text(stringResource(R.string.pending_items))
                         Text(
                             text = uiState.pendingCount.toString(),
                             color = if (uiState.pendingCount > 0) Color(0xFFF57C00) else Color(0xFF2E7D32),
@@ -198,7 +212,7 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Syncing in progress...", style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.syncing_in_progress), style = MaterialTheme.typography.bodySmall)
                         }
                     }
 
@@ -207,13 +221,13 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
                         enabled = !uiState.isSyncing,
                         modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
                     ) {
-                        Text(if (uiState.isSyncing) "Syncing..." else "Sync Now")
+                        Text(if (uiState.isSyncing) stringResource(R.string.syncing) else stringResource(R.string.sync_now))
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showSyncDialog = false }) {
-                    Text("Close")
+                    Text(stringResource(R.string.close))
                 }
             }
         )
@@ -268,19 +282,20 @@ fun SettingRow(
     }
 }
 
-private fun getRelativeTime(timestamp: Long): String {
+private fun getRelativeTime(timestamp: Long, context: Context): String {
     val now = System.currentTimeMillis()
     val diff = now - timestamp
     val diffMinutes = diff / (60 * 1000)
     val diffHours = diff / (60 * 60 * 1000)
     
     return when {
-        diff < 60 * 1000 -> "Just now"
-        diff < 60 * 60 * 1000 -> "$diffMinutes mins ago"
-        diff < 36 * 60 * 60 * 1000 -> "$diffHours hours ago"
+        diff < 60 * 1000 -> context.getString(R.string.just_now)
+        diff < 60 * 60 * 1000 -> context.getString(R.string.mins_ago, diffMinutes.toInt())
+        diff < 36 * 60 * 60 * 1000 -> context.getString(R.string.hours_ago, diffHours.toInt())
         else -> {
             val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
             sdf.format(Date(timestamp))
         }
     }
 }
+

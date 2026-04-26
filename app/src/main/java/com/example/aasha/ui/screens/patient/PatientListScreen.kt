@@ -15,6 +15,9 @@ import com.example.aasha.ui.navigation.Screen
 import com.example.aasha.ui.screens.dashboard.PatientItem
 import com.example.aasha.viewmodel.PatientViewModel
 
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientListScreen(
@@ -27,10 +30,10 @@ fun PatientListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Patients List") },
+                title = { Text(stringResource(R.string.patients)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )

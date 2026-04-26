@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.aasha.viewmodel.LoginUiState
 import com.example.aasha.viewmodel.LoginViewModel
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
 
 sealed class ScreenMode {
     object Login : ScreenMode()
@@ -57,12 +59,21 @@ fun LoginScreen(
     var localityError by remember { mutableStateOf<String?>(null) }
     var mPinError by remember { mutableStateOf<String?>(null) }
 
+    val idEmptyError = stringResource(R.string.id_cannot_empty)
+    val passwordEmptyError = stringResource(R.string.password_cannot_empty)
+    val nameEmptyError = stringResource(R.string.name_cannot_empty)
+    val idShortError = stringResource(R.string.id_too_short)
+    val emailInvalidError = stringResource(R.string.email_invalid)
+    val passwordShortError = stringResource(R.string.password_too_short)
+    val localityEmptyError = stringResource(R.string.locality_cannot_empty)
+    val mpinInvalidError = stringResource(R.string.mpin_invalid)
+
     LaunchedEffect(uiState) {
         when (uiState) {
             is LoginUiState.Success -> onLoginSuccess()
             is LoginUiState.RegistrationSuccess -> screenMode = ScreenMode.SetupMpin
             is LoginUiState.MPinSetupSuccess -> {
-                Toast.makeText(context, "Account and MPIN set successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.account_setup_success), Toast.LENGTH_SHORT).show()
                 onLoginSuccess() // Go to Dashboard immediately after setup
             }
             is LoginUiState.Error -> {
@@ -76,14 +87,14 @@ fun LoginScreen(
     fun validateLogin(): Boolean {
         var isValid = true
         if (aashaId.isBlank()) {
-            aashaIdError = "Aasha ID cannot be empty"
+            aashaIdError = idEmptyError
             isValid = false
         } else {
             aashaIdError = null
         }
 
         if (password.isBlank()) {
-            passwordError = "Password cannot be empty"
+            passwordError = passwordEmptyError
             isValid = false
         } else {
             passwordError = null
@@ -94,41 +105,41 @@ fun LoginScreen(
     fun validateRegistration(): Boolean {
         var isValid = true
         if (name.isBlank()) {
-            nameError = "Name cannot be empty"
+            nameError = nameEmptyError
             isValid = false
         } else {
             nameError = null
         }
 
         if (aashaId.isBlank()) {
-            aashaIdError = "Aasha ID cannot be empty"
+            aashaIdError = idEmptyError
             isValid = false
         } else if (aashaId.length < 4) {
-            aashaIdError = "Aasha ID must be at least 4 characters"
+            aashaIdError = idShortError
             isValid = false
         } else {
             aashaIdError = null
         }
 
         if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            emailError = "Please enter a valid email"
+            emailError = emailInvalidError
             isValid = false
         } else {
             emailError = null
         }
 
         if (password.isBlank()) {
-            passwordError = "Password cannot be empty"
+            passwordError = passwordEmptyError
             isValid = false
         } else if (password.length < 6) {
-            passwordError = "Password must be at least 6 characters"
+            passwordError = passwordShortError
             isValid = false
         } else {
             passwordError = null
         }
 
         if (locality.isBlank()) {
-            localityError = "Locality cannot be empty"
+            localityError = localityEmptyError
             isValid = false
         } else {
             localityError = null
@@ -141,7 +152,7 @@ fun LoginScreen(
             mPinError = null
             return true
         } else {
-            mPinError = "MPIN must be exactly 4 digits"
+            mPinError = mpinInvalidError
             return false
         }
     }
@@ -157,17 +168,17 @@ fun LoginScreen(
     ) {
         Spacer(modifier = Modifier.height(64.dp))
         Text(
-            text = "Aasha",
+            text = stringResource(R.string.app_name),
             fontSize = 40.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = when(screenMode) {
-                ScreenMode.Login -> "Worker Login"
-                ScreenMode.Register -> "Create Account"
-                ScreenMode.SetupMpin -> "Setup Secure MPIN"
-                ScreenMode.LoginMpin -> "Enter MPIN"
+                ScreenMode.Login -> stringResource(R.string.worker_login)
+                ScreenMode.Register -> stringResource(R.string.create_account)
+                ScreenMode.SetupMpin -> stringResource(R.string.setup_secure_mpin)
+                ScreenMode.LoginMpin -> stringResource(R.string.enter_mpin)
             },
             fontSize = 18.sp,
             color = MaterialTheme.colorScheme.secondary,
@@ -182,7 +193,7 @@ fun LoginScreen(
                         aashaId = it
                         aashaIdError = null
                     },
-                    label = { Text("Aasha ID") },
+                    label = { Text(stringResource(R.string.aasha_id)) },
                     isError = aashaIdError != null,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -197,7 +208,7 @@ fun LoginScreen(
                         password = it
                         passwordError = null
                     },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.password)) },
                     isError = passwordError != null,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -219,7 +230,7 @@ fun LoginScreen(
                     if (uiState is LoginUiState.Loading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Login", fontSize = 18.sp)
+                        Text(stringResource(R.string.login), fontSize = 18.sp)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -228,7 +239,7 @@ fun LoginScreen(
                     aashaIdError = null
                     passwordError = null
                 }) {
-                    Text("New User? Sign Up Here")
+                    Text(stringResource(R.string.new_user_signup))
                 }
             }
 
@@ -239,7 +250,7 @@ fun LoginScreen(
                         name = it
                         nameError = null
                     },
-                    label = { Text("Full Name") },
+                    label = { Text(stringResource(R.string.full_name)) },
                     isError = nameError != null,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -254,7 +265,7 @@ fun LoginScreen(
                         aashaId = it
                         aashaIdError = null
                     },
-                    label = { Text("Aasha ID") },
+                    label = { Text(stringResource(R.string.aasha_id)) },
                     isError = aashaIdError != null,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -269,7 +280,7 @@ fun LoginScreen(
                         email = it
                         emailError = null
                     },
-                    label = { Text("Email Address") },
+                    label = { Text(stringResource(R.string.email_address)) },
                     isError = emailError != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
@@ -285,7 +296,7 @@ fun LoginScreen(
                         password = it
                         passwordError = null
                     },
-                    label = { Text("Set Password") },
+                    label = { Text(stringResource(R.string.set_password)) },
                     isError = passwordError != null,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -301,7 +312,7 @@ fun LoginScreen(
                         locality = it
                         localityError = null
                     },
-                    label = { Text("Serving Area / Locality") },
+                    label = { Text(stringResource(R.string.serving_area)) },
                     isError = localityError != null,
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
@@ -322,7 +333,7 @@ fun LoginScreen(
                     if (uiState is LoginUiState.Loading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Sign Up", fontSize = 18.sp)
+                        Text(stringResource(R.string.signup), fontSize = 18.sp)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -333,19 +344,19 @@ fun LoginScreen(
                     emailError = null
                     localityError = null
                 }) {
-                    Text("Already have an account? Login")
+                    Text(stringResource(R.string.already_have_account))
                 }
             }
 
             ScreenMode.SetupMpin -> {
-                Text("Set a 4-digit PIN for quick access", modifier = Modifier.padding(bottom = 16.dp))
+                Text(stringResource(R.string.mpin_setup_msg), modifier = Modifier.padding(bottom = 16.dp))
                 OutlinedTextField(
                     value = mPin,
                     onValueChange = { 
                         if (it.length <= 4 && it.all { char -> char.isDigit() }) mPin = it
                         mPinError = null
                     },
-                    label = { Text("4-Digit MPIN") },
+                    label = { Text(stringResource(R.string.mpin_label)) },
                     isError = mPinError != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     visualTransformation = PasswordVisualTransformation(),
@@ -368,20 +379,20 @@ fun LoginScreen(
                     if (uiState is LoginUiState.Loading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Set MPIN", fontSize = 18.sp)
+                        Text(stringResource(R.string.set_mpin), fontSize = 18.sp)
                     }
                 }
             }
 
             ScreenMode.LoginMpin -> {
-                Text("Enter your MPIN to continue", modifier = Modifier.padding(bottom = 16.dp))
+                Text(stringResource(R.string.mpin_entry_msg), modifier = Modifier.padding(bottom = 16.dp))
                 OutlinedTextField(
                     value = mPin,
                     onValueChange = { 
                         if (it.length <= 4 && it.all { char -> char.isDigit() }) mPin = it
                         mPinError = null
                     },
-                    label = { Text("MPIN") },
+                    label = { Text(stringResource(R.string.mpin_label)) },
                     isError = mPinError != null,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                     visualTransformation = PasswordVisualTransformation(),
@@ -404,7 +415,7 @@ fun LoginScreen(
                     if (uiState is LoginUiState.Loading) {
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
-                        Text("Unlock App", fontSize = 18.sp)
+                        Text(stringResource(R.string.unlock_app), fontSize = 18.sp)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -413,18 +424,17 @@ fun LoginScreen(
                     viewModel.resetToIdle()
                     mPinError = null
                 }) {
-                    Text("Use Aasha ID instead")
+                    Text(stringResource(R.string.use_id_instead))
                 }
                 TextButton(onClick = {
                     screenMode = ScreenMode.Register
                     viewModel.resetToIdle()
                     mPinError = null
                 }) {
-                    Text("New User? Sign Up Here")
+                    Text(stringResource(R.string.new_user_signup))
                 }
             }
         }
         Spacer(modifier = Modifier.height(48.dp)) // Bottom spacing for scrollability
     }
 }
-

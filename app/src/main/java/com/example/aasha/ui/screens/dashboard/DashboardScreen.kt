@@ -25,6 +25,9 @@ import com.example.aasha.viewmodel.DashboardViewModel
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun DashboardScreen(
@@ -33,12 +36,19 @@ fun DashboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val context = LocalContext.current
     
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         viewModel.syncEvents.collectLatest { message ->
-            snackbarHostState.showSnackbar(message)
+            val translatedMessage = when(message) {
+                "Sync Started" -> context.getString(R.string.sync_started)
+                "Sync Completed" -> context.getString(R.string.sync_completed)
+                "Sync Failed" -> context.getString(R.string.sync_failed)
+                else -> message
+            }
+            snackbarHostState.showSnackbar(translatedMessage)
         }
     }
 
@@ -81,7 +91,7 @@ fun DashboardScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { viewModel.onSearchQueryChange(it) },
-                    placeholder = { Text("Search Patients") },
+                    placeholder = { Text(stringResource(R.string.search_patients)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
@@ -90,7 +100,7 @@ fun DashboardScreen(
 
             if (searchQuery.isNotEmpty()) {
                 item {
-                    Text("Search Results", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.search_results), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 items(uiState.patients) { patient ->
                     PatientItem(patient) {
@@ -107,7 +117,7 @@ fun DashboardScreen(
 
                 // Today's Tasks
                 item {
-                    Text("Today's Tasks", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.todays_tasks), fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 }
 
                 items(uiState.tasks) { task ->
@@ -146,7 +156,7 @@ fun PatientItem(patient: Patient, onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(patient.name, fontWeight = FontWeight.Bold)
-                Text("${patient.age} yrs • ${patient.gender}", fontSize = 12.sp)
+                Text(stringResource(R.string.yrs_gender, patient.age, patient.gender), fontSize = 12.sp)
             }
         }
     }
@@ -160,7 +170,7 @@ fun HeaderSection(name: String, area: String, isSyncing: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column {
-            Text(text = "Namaste, $name", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            Text(text = stringResource(R.string.namaste, name), fontSize = 22.sp, fontWeight = FontWeight.Bold)
             Text(text = area, fontSize = 14.sp, color = MaterialTheme.colorScheme.primary)
         }
         
@@ -188,7 +198,7 @@ fun HeaderSection(name: String, area: String, isSyncing: Boolean) {
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (isSyncing) "Syncing..." else "Synced",
+                    text = if (isSyncing) stringResource(R.string.syncing) else stringResource(R.string.synced),
                     fontSize = 12.sp,
                     color = if (isSyncing) MaterialTheme.colorScheme.primary else Color(0xFF2E7D32)
                 )
@@ -220,14 +230,14 @@ fun SyncInfoSection(pendingCount: Int, lastSyncTime: Long) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (pendingCount > 0) "$pendingCount items pending" else "All data synced",
+                    text = if (pendingCount > 0) stringResource(R.string.items_pending, pendingCount) else stringResource(R.string.all_data_synced),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
             
             Text(
-                text = if (lastSyncTime > 0) "Last: ${formatTimestamp(lastSyncTime)}" else "Never synced",
+                text = if (lastSyncTime > 0) stringResource(R.string.last_sync, formatTimestamp(lastSyncTime)) else stringResource(R.string.never_synced),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -246,9 +256,9 @@ fun StatsSection(appointments: Int, vaccinations: Int, patients: Int, onPatients
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        StatCard("Appts", appointments.toString(), Color(0xFFE3F2FD), Modifier.weight(1f))
-        StatCard("Vaccine", vaccinations.toString(), Color(0xFFF3E5F5), Modifier.weight(1f))
-        StatCard("Patients", patients.toString(), Color(0xFFE8F5E9), Modifier.weight(1f), onClick = onPatientsClick)
+        StatCard(stringResource(R.string.appts), appointments.toString(), Color(0xFFE3F2FD), Modifier.weight(1f))
+        StatCard(stringResource(R.string.vaccine), vaccinations.toString(), Color(0xFFF3E5F5), Modifier.weight(1f))
+        StatCard(stringResource(R.string.patients), patients.toString(), Color(0xFFE8F5E9), Modifier.weight(1f), onClick = onPatientsClick)
     }
 }
 
@@ -276,11 +286,11 @@ fun QuickActionsSection(navController: NavController, isSyncing: Boolean, onSync
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        QuickActionButton("New Patient", Icons.Default.Add, Modifier.weight(1f)) {
+        QuickActionButton(stringResource(R.string.new_patient), Icons.Default.Add, Modifier.weight(1f)) {
             navController.navigate(Screen.AddPatient.route)
         }
         QuickActionButton(
-            label = if (isSyncing) "Syncing..." else "Sync Now", 
+            label = if (isSyncing) stringResource(R.string.syncing) else stringResource(R.string.sync_now), 
             icon = Icons.Default.Sync, 
             modifier = Modifier.weight(1f),
             enabled = !isSyncing,

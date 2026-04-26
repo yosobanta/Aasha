@@ -21,17 +21,26 @@ class SessionManager @Inject constructor(
 ) {
     private val dataStore = context.dataStore
     
-    private val masterKey = MasterKey.Builder(context)
-        .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-        .build()
+    private val masterKey by lazy {
+        MasterKey.Builder(context)
+            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+            .build()
+    }
 
-    private val encryptedPrefs = EncryptedSharedPreferences.create(
-        context,
-        "secure_mpin_prefs",
-        masterKey,
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val encryptedPrefs by lazy {
+        try {
+            EncryptedSharedPreferences.create(
+                context,
+                "secure_mpin_prefs",
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("SessionManager", "EncryptedSharedPreferences creation failed", e)
+            context.getSharedPreferences("secure_mpin_prefs_fallback", Context.MODE_PRIVATE)
+        }
+    }
 
     companion object {
         private val WORKER_ID = stringPreferencesKey("worker_id")

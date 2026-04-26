@@ -8,10 +8,10 @@ import java.util.UUID
 data class Vaccination(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
-    val patientId: String,
-    val patientName: String,
-    val vaccineName: String,
-    val doseNumber: String,
+    val patientId: String = "",
+    val patientName: String = "",
+    val vaccineName: String = "",
+    val doseNumber: String = "",
     val dateAdministered: Long = System.currentTimeMillis(),
     val remarks: String = "",
     val lastUpdated: Long = System.currentTimeMillis(),

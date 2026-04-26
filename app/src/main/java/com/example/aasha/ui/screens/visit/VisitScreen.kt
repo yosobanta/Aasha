@@ -13,6 +13,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.aasha.domain.model.Patient
 import com.example.aasha.domain.model.Visit
 import com.example.aasha.viewmodel.PatientViewModel
+import androidx.compose.ui.res.stringResource
+import com.example.aasha.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,10 +32,10 @@ fun VisitScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Record Patient Visit") },
+                title = { Text(stringResource(R.string.record_visit)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel))
                     }
                 }
             )
@@ -47,7 +49,7 @@ fun VisitScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Select Patient", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.select_patient), style = MaterialTheme.typography.titleMedium)
             com.example.aasha.ui.screens.vaccination.PatientDropdown(
                 patients = patients,
                 selectedPatient = selectedPatient,
@@ -57,14 +59,14 @@ fun VisitScreen(
             OutlinedTextField(
                 value = visitReason,
                 onValueChange = { visitReason = it },
-                label = { Text("Reason for Visit") },
+                label = { Text(stringResource(R.string.reason_for_visit)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
                 value = observations,
                 onValueChange = { observations = it },
-                label = { Text("Observations / Symptoms") },
+                label = { Text(stringResource(R.string.observations)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -72,7 +74,7 @@ fun VisitScreen(
             OutlinedTextField(
                 value = treatmentProvided,
                 onValueChange = { treatmentProvided = it },
-                label = { Text("Treatment / Advice Given") },
+                label = { Text(stringResource(R.string.treatment_advice)) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -98,7 +100,7 @@ fun VisitScreen(
                 enabled = selectedPatient != null && visitReason.isNotBlank(),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Save Visit Record")
+                Text(stringResource(R.string.save_visit))
             }
         }
     }
