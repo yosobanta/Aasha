@@ -14,4 +14,5 @@ sealed class Screen(val route: String) {
     object Vaccination : Screen("vaccination")
     object Visit : Screen("visit")
     object PatientList : Screen("patient_list")
+    object SetupMpin : Screen("setup_mpin")
 }

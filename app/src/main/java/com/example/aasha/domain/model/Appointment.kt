@@ -11,6 +11,7 @@ data class Appointment(
     val patientId: String = "",
     val patientName: String = "",
     val dateTime: Long = 0L,
+    val workerId: String = "",
     val lastUpdated: Long = System.currentTimeMillis(),
     val syncStatus: SyncStatus = SyncStatus.PENDING
 )

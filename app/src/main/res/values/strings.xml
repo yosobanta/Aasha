@@ -78,9 +78,13 @@
     <string name="serving_area">Serving Area / Locality</string>
     <string name="signup">Sign Up</string>
     <string name="already_have_account">Already have an account? Login</string>
+    <string name="login_with_mpin">Login with MPIN</string>
+    <string name="login_with_aasha_id">Login with AashaID</string>
+    <string name="welcome_back">Welcome Back</string>
     <string name="mpin_setup_msg">Set a 4-digit PIN for quick access</string>
     <string name="mpin_label">4-Digit MPIN</string>
     <string name="set_mpin">Set MPIN</string>
+    <string name="change_mpin">Change MPIN</string>
     <string name="mpin_entry_msg">Enter your MPIN to continue</string>
     <string name="unlock_app">Unlock App</string>
     <string name="use_id_instead">Use Aasha ID instead</string>
@@ -139,4 +143,10 @@
     <string name="locality_cannot_empty">Locality cannot be empty</string>
     <string name="mpin_invalid">MPIN must be exactly 4 digits</string>
     <string name="account_setup_success">Account and MPIN set successfully!</string>
+    
+    <!-- Patient Deletion -->
+    <string name="delete_patient">Delete Patient</string>
+    <string name="delete_patient_confirm">Are you sure you want to delete this patient record? This action requires your password.</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="delete">Delete</string>
 </resources>

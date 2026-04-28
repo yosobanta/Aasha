@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aasha.data.repository.MainRepository
 import com.example.aasha.data.repository.PatientRepository
+import com.example.aasha.data.repository.AuthRepository
 import com.example.aasha.domain.model.Patient
 import com.example.aasha.domain.model.Vaccination
 import com.example.aasha.domain.model.Visit
@@ -15,11 +16,17 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PatientViewModel @Inject constructor(
     private val repository: MainRepository,
-    private val patientRepository: PatientRepository
+    private val patientRepository: PatientRepository,
+    private val authRepository: AuthRepository,
+    private val sessionManager: com.example.aasha.data.local.SessionManager
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -41,6 +48,15 @@ class PatientViewModel @Inject constructor(
 
     fun onSearchQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
+    }
+
+    fun verifyPassword(password: String): Boolean {
+        val workerId = runBlocking { sessionManager.workerId.first() }
+        return if (workerId != null) {
+            authRepository.verifyAdminPassword(password, workerId)
+        } else {
+            false
+        }
     }
 
     fun getVaccinations(patientId: String): StateFlow<List<Vaccination>> {

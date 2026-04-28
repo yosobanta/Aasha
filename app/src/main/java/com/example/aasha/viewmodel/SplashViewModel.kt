@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 sealed class SplashRoute {
@@ -28,7 +29,12 @@ class SplashViewModel @Inject constructor(
     val isLoggedIn: StateFlow<Boolean> = sessionManager.isLoggedIn
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    private val _hasMpin = MutableStateFlow(sessionManager.hasMpin())
+    private val _hasMpin = MutableStateFlow(
+        runBlocking { 
+            val id = sessionManager.lastWorkerId.first()
+            id != null && sessionManager.hasMpin(id)
+        }
+    )
     val hasMpin: StateFlow<Boolean> = _hasMpin.asStateFlow()
 
     private val _route = MutableStateFlow<SplashRoute>(SplashRoute.Idle)

@@ -10,6 +10,7 @@ data class Visit(
     val id: String = UUID.randomUUID().toString(),
     val patientId: String = "",
     val patientName: String = "",
+    val workerId: String = "",
     val visitDate: Long = System.currentTimeMillis(),
     val reason: String = "",
     val observations: String = "",

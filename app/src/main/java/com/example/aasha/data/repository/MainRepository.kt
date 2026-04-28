@@ -15,6 +15,11 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class MainRepository @Inject constructor(
     private val visitDao: VisitDao,
@@ -25,18 +30,39 @@ class MainRepository @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     // Flows for real-time local data
-    val appointments: Flow<List<Appointment>> = appointmentDao.getAllAppointments()
+    val appointments: Flow<List<Appointment>> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else appointmentDao.getAllAppointments(id)
+    }
 
-    fun getVaccinationsByPatient(patientId: String): Flow<List<Vaccination>> = 
-        vaccinationDao.getVaccinationsByPatient(patientId)
+    fun getVaccinationsByPatient(patientId: String): Flow<List<Vaccination>> =
+        sessionManager.workerId.flatMapLatest { id ->
+            if (id == null) flowOf(emptyList()) else vaccinationDao.getVaccinationsByPatient(patientId, id)
+        }
 
-    fun getVisitsByPatient(patientId: String): Flow<List<Visit>> = 
-        visitDao.getVisitsByPatient(patientId)
+    fun getVisitsByPatient(patientId: String): Flow<List<Visit>> =
+        sessionManager.workerId.flatMapLatest { id ->
+            if (id == null) flowOf(emptyList()) else visitDao.getVisitsByPatient(patientId, id)
+        }
 
-    // --- Appointment Operations ---
+    // Dynamic Counts
+    val appointmentCount: Flow<Int> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(0) else appointmentDao.getAppointmentCount(id)
+    }
+
+    val visitCount: Flow<Int> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(0) else visitDao.getVisitCount(id)
+    }
+
+    val vaccinationCount: Flow<Int> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(0) else vaccinationDao.getVaccinationCount(id)
+    }
+
+    // --- Operations ---
 
     suspend fun saveAppointment(appointment: Appointment) {
+        val workerId = sessionManager.workerId.first() ?: ""
         val updatedAppointment = appointment.copy(
+            workerId = workerId,
             lastUpdated = System.currentTimeMillis(),
             syncStatus = SyncStatus.PENDING
         )
@@ -45,7 +71,9 @@ class MainRepository @Inject constructor(
     }
 
     suspend fun saveVaccination(vaccination: Vaccination) {
+        val workerId = sessionManager.workerId.first() ?: ""
         val updatedVaccination = vaccination.copy(
+            workerId = workerId,
             lastUpdated = System.currentTimeMillis(),
             syncStatus = SyncStatus.PENDING
         )
@@ -54,7 +82,9 @@ class MainRepository @Inject constructor(
     }
 
     suspend fun saveVisit(visit: Visit) {
+        val workerId = sessionManager.workerId.first() ?: ""
         val updatedVisit = visit.copy(
+            workerId = workerId,
             lastUpdated = System.currentTimeMillis(),
             syncStatus = SyncStatus.PENDING
         )
@@ -62,13 +92,17 @@ class MainRepository @Inject constructor(
         triggerOneTimeSync()
     }
 
-    // --- Sync Logic (Conflict Resolution: Last-Write-Wins) ---
+    // --- Sync Logic ---
 
     suspend fun syncLocalWithRemote() {
+        val workerId = sessionManager.workerId.first() ?: return
+
+        // Sync Appointments
         val pendingAppointments = appointmentDao.getAppointmentsBySyncStatus(SyncStatus.PENDING)
         pendingAppointments.forEach { appointment ->
             try {
-                firestore.collection("appointments").document(appointment.id)
+                firestore.collection("users").document(workerId)
+                    .collection("appointments").document(appointment.id)
                     .set(appointment.copy(syncStatus = SyncStatus.SYNCED))
                     .await()
                 appointmentDao.updateAppointment(appointment.copy(syncStatus = SyncStatus.SYNCED))
@@ -76,8 +110,35 @@ class MainRepository @Inject constructor(
                 appointmentDao.updateAppointment(appointment.copy(syncStatus = SyncStatus.ERROR))
             }
         }
-    }
 
+        // Sync Visits
+        val pendingVisits = visitDao.getVisitsBySyncStatus(SyncStatus.PENDING)
+        pendingVisits.forEach { visit ->
+            try {
+                firestore.collection("users").document(workerId)
+                    .collection("visits").document(visit.id)
+                    .set(visit.copy(syncStatus = SyncStatus.SYNCED))
+                    .await()
+                visitDao.updateVisit(visit.copy(syncStatus = SyncStatus.SYNCED))
+            } catch (e: Exception) {
+                visitDao.updateVisit(visit.copy(syncStatus = SyncStatus.ERROR))
+            }
+        }
+
+        // Sync Vaccinations
+        val pendingVaccinations = vaccinationDao.getVaccinationsBySyncStatus(SyncStatus.PENDING)
+        pendingVaccinations.forEach { vaccination ->
+            try {
+                firestore.collection("users").document(workerId)
+                    .collection("vaccinations").document(vaccination.id)
+                    .set(vaccination.copy(syncStatus = SyncStatus.SYNCED))
+                    .await()
+                vaccinationDao.updateVaccination(vaccination.copy(syncStatus = SyncStatus.SYNCED))
+            } catch (e: Exception) {
+                vaccinationDao.updateVaccination(vaccination.copy(syncStatus = SyncStatus.ERROR))
+            }
+        }
+    }
     private fun triggerOneTimeSync() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)

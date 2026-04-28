@@ -22,6 +22,7 @@ import com.example.aasha.ui.navigation.BottomNavItem
 import com.example.aasha.ui.navigation.Screen
 import com.example.aasha.ui.screens.dashboard.DashboardScreen
 import com.example.aasha.ui.screens.login.LoginScreen
+import com.example.aasha.ui.screens.login.ScreenMode
 import com.example.aasha.ui.screens.profile.ProfileScreen
 import com.example.aasha.ui.screens.splash.SplashScreen
 import com.example.aasha.ui.screens.appointment.AppointmentScreen
@@ -143,7 +144,7 @@ fun MainScreen(
                 DashboardScreen(navController = navController)
             }
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(navController = navController)
             }
             composable(Screen.Appointment.route) {
                 AppointmentScreen(onBack = { navController.popBackStack() })
@@ -173,6 +174,15 @@ fun MainScreen(
                     navController = navController,
                     onBack = { navController.popBackStack() },
                     viewModel = patientViewModel
+                )
+            }
+            composable(Screen.SetupMpin.route) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.popBackStack()
+                    },
+                    showMpinInitially = false,
+                    initialMode = ScreenMode.SetupMpin
                 )
             }
         }

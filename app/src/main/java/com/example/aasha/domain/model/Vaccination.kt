@@ -10,6 +10,7 @@ data class Vaccination(
     val id: String = UUID.randomUUID().toString(),
     val patientId: String = "",
     val patientName: String = "",
+    val workerId: String = "",
     val vaccineName: String = "",
     val doseNumber: String = "",
     val dateAdministered: Long = System.currentTimeMillis(),

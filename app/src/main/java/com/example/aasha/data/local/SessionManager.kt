@@ -44,16 +44,20 @@ class SessionManager @Inject constructor(
 
     companion object {
         private val WORKER_ID = stringPreferencesKey("worker_id")
+        private val LAST_WORKER_ID = stringPreferencesKey("last_worker_id")
         private val NAME = stringPreferencesKey("name")
         private val EMAIL = stringPreferencesKey("email")
         private val LOCALITY = stringPreferencesKey("locality")
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val LANGUAGE = stringPreferencesKey("language")
         private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
-        private const val MPIN_HASH_KEY = "user_mpin_hash"
+
+        private const val MPIN_HASH_PREFIX = "mpin_hash_"
+        private const val PASSWORD_HASH_PREFIX = "password_hash_"
     }
 
     val workerId: Flow<String?> = dataStore.data.map { it[WORKER_ID] }
+    val lastWorkerId: Flow<String?> = dataStore.data.map { it[LAST_WORKER_ID] }
     val name: Flow<String?> = dataStore.data.map { it[NAME] }
     val email: Flow<String?> = dataStore.data.map { it[EMAIL] }
     val locality: Flow<String?> = dataStore.data.map { it[LOCALITY] }
@@ -61,21 +65,30 @@ class SessionManager @Inject constructor(
     val language: Flow<String> = dataStore.data.map { it[LANGUAGE] ?: "en" }
     val lastSyncTime: Flow<Long> = dataStore.data.map { it[LAST_SYNC_TIME] ?: 0L }
 
-    fun hasMpin(): Boolean {
-        return encryptedPrefs.getString(MPIN_HASH_KEY, null) != null
+    fun hasMpin(workerId: String): Boolean {
+        return encryptedPrefs.getString(MPIN_HASH_PREFIX + workerId, null) != null
     }
 
-    fun verifyMpin(pin: String): Boolean {
-        val savedHash = encryptedPrefs.getString(MPIN_HASH_KEY, null)
+    fun verifyMpin(pin: String, workerId: String): Boolean {
+        val savedHash = encryptedPrefs.getString(MPIN_HASH_PREFIX + workerId, null)
         return if (savedHash != null) {
-            hashMpin(pin) == savedHash
+            hashString(pin) == savedHash
         } else {
             false
         }
     }
 
-    private fun hashMpin(pin: String): String {
-        val bytes = pin.toByteArray()
+    fun verifyPassword(password: String, workerId: String): Boolean {
+        val savedHash = encryptedPrefs.getString(PASSWORD_HASH_PREFIX + workerId, null)
+        return if (savedHash != null) {
+            hashString(password) == savedHash
+        } else {
+            false
+        }
+    }
+
+    private fun hashString(input: String): String {
+        val bytes = input.toByteArray()
         val md = MessageDigest.getInstance("SHA-256")
         val digest = md.digest(bytes)
         return digest.fold("") { str, it -> str + "%02x".format(it) }
@@ -84,6 +97,7 @@ class SessionManager @Inject constructor(
     suspend fun saveSession(workerId: String, name: String, email: String, locality: String) {
         dataStore.edit { preferences ->
             preferences[WORKER_ID] = workerId
+            preferences[LAST_WORKER_ID] = workerId
             preferences[NAME] = name
             preferences[EMAIL] = email
             preferences[LOCALITY] = locality
@@ -96,20 +110,34 @@ class SessionManager @Inject constructor(
             preferences[LANGUAGE] = language
         }
     }
-    
+
     suspend fun updateLastSyncTime(time: Long) {
         dataStore.edit { preferences ->
             preferences[LAST_SYNC_TIME] = time
         }
     }
 
-    fun saveMpin(mpin: String) {
-        val hashedMpin = hashMpin(mpin)
-        encryptedPrefs.edit().putString(MPIN_HASH_KEY, hashedMpin).apply()
+    fun saveMpin(mpin: String, workerId: String) {
+        val hashedMpin = hashString(mpin)
+        encryptedPrefs.edit().putString(MPIN_HASH_PREFIX + workerId, hashedMpin).apply()
+    }
+
+    fun savePasswordHash(password: String, workerId: String) {
+        val hash = hashString(password)
+        encryptedPrefs.edit().putString(PASSWORD_HASH_PREFIX + workerId, hash).apply()
+    }
+
+    suspend fun setLoggedIn(loggedIn: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[IS_LOGGED_IN] = loggedIn
+        }
     }
 
     suspend fun clearSession() {
-        dataStore.edit { it.clear() }
-        encryptedPrefs.edit().clear().apply()
+        dataStore.edit { preferences ->
+            preferences[IS_LOGGED_IN] = false
+        }
+        // Note: We keep WORKER_ID, NAME, EMAIL, LOCALITY, LAST_WORKER_ID 
+        // and encrypted MPINs/Passwords for offline login support
     }
-}
+    }

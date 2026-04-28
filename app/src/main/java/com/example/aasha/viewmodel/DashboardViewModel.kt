@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -28,7 +29,11 @@ data class DashboardUiState(
     val tasks: List<PatientTask> = emptyList(),
     val isSyncing: Boolean = false,
     val pendingCount: Int = 0,
-    val lastSyncTime: Long = 0L
+    val lastSyncTime: Long = 0L,
+    val totalPatients: Int = 0,
+    val totalAppointments: Int = 0,
+    val totalVisits: Int = 0,
+    val totalVaccinations: Int = 0
 )
 
 data class PatientTask(
@@ -38,6 +43,14 @@ data class PatientTask(
     val isCompleted: Boolean
 )
 
+data class DashboardStats(
+    val totalPatients: Int = 0,
+    val totalAppointments: Int = 0,
+    val totalVisits: Int = 0,
+    val totalVaccinations: Int = 0
+)
+
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val repository: MainRepository,
@@ -50,7 +63,7 @@ class DashboardViewModel @Inject constructor(
     val searchQuery: StateFlow<String> = _searchQuery
 
     private val _isSyncing = MutableStateFlow(false)
-    
+
     private val _syncEvents = MutableSharedFlow<String>()
     val syncEvents: SharedFlow<String> = _syncEvents.asSharedFlow()
 
@@ -65,32 +78,46 @@ class DashboardViewModel @Inject constructor(
         _isSyncing
     ) { pending, lastSync, syncing -> Triple(pending, lastSync, syncing) }
 
+    private val statsFlow = combine(
+        patientRepository.patientCount,
+        repository.appointmentCount,
+        repository.visitCount,
+        repository.vaccinationCount
+    ) { p, a, v, vac -> 
+        DashboardStats(p, a, v, vac)
+    }
+
     val uiState: StateFlow<DashboardUiState> = combine(
         _searchQuery.flatMapLatest { query ->
             if (query.isEmpty()) patientRepository.patients else patientRepository.searchPatients(query)
         },
         repository.appointments,
         sessionFlow,
-        syncStatusFlow
-    ) { patients, appointments, session, syncStatus ->
+        syncStatusFlow,
+        statsFlow
+    ) { patients, appointments, session, syncStatus, stats ->
         val (name, locality) = session
         val (pendingCount, lastSyncTime, isSyncing) = syncStatus
-        
+
         DashboardUiState(
             patients = patients,
             ashaName = name ?: "Savitri Devi",
             area = locality ?: "Bishnupur Village",
-            appointmentsToday = appointments.filter { 
+            appointmentsToday = appointments.filter {
                 val today = System.currentTimeMillis()
                 it.dateTime in (today - 86400000..today + 86400000)
             }.size,
-            tasks = appointments.map { 
-                PatientTask(it.id, it.patientName, "Follow-up", false) 
+            tasks = appointments.map {
+                PatientTask(it.id, it.patientName, "Follow-up", false)
             },
             pendingCount = pendingCount,
             lastSyncTime = lastSyncTime,
             isSyncing = isSyncing,
-            isOnline = true
+            isOnline = true,
+            totalPatients = stats.totalPatients,
+            totalAppointments = stats.totalAppointments,
+            totalVisits = stats.totalVisits,
+            totalVaccinations = stats.totalVaccinations
         )
     }.stateIn(
         scope = viewModelScope,

@@ -8,7 +8,8 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val sessionManager: com.example.aasha.data.local.SessionManager
 ) {
     suspend fun signUp(email: String, password: String): AuthResult {
         return auth.createUserWithEmailAndPassword(email, password).await()
@@ -16,6 +17,10 @@ class AuthRepository @Inject constructor(
 
     suspend fun signIn(email: String, password: String): AuthResult {
         return auth.signInWithEmailAndPassword(email, password).await()
+    }
+
+    fun verifyAdminPassword(input: String, workerId: String): Boolean {
+        return sessionManager.verifyPassword(input, workerId)
     }
 
     fun signOut() {

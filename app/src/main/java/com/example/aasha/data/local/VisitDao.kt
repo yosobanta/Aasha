@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VisitDao {
-    @Query("SELECT * FROM visits WHERE patientId = :patientId")
-    fun getVisitsByPatient(patientId: String): Flow<List<Visit>>
+    @Query("SELECT * FROM visits WHERE patientId = :patientId AND workerId = :workerId")
+    fun getVisitsByPatient(patientId: String, workerId: String): Flow<List<Visit>>
 
     @Query("SELECT * FROM visits WHERE syncStatus = :status")
     suspend fun getVisitsBySyncStatus(status: SyncStatus): List<Visit>
@@ -18,4 +18,7 @@ interface VisitDao {
 
     @Update
     suspend fun updateVisit(visit: Visit)
+
+    @Query("SELECT COUNT(*) FROM visits WHERE workerId = :workerId")
+    fun getVisitCount(workerId: String): Flow<Int>
 }

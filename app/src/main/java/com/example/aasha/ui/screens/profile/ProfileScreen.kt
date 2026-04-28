@@ -30,11 +30,14 @@ import com.example.aasha.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
+fun ProfileScreen(
+    navController: androidx.navigation.NavController,
+    viewModel: ProfileViewModel = hiltViewModel()
+) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
@@ -112,8 +115,14 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     SettingRow(stringResource(R.string.language_selection), Icons.Default.Language) { showLanguageDialog = true }
+
+                    val mPinLabel = if (uiState.hasMpin) stringResource(R.string.change_mpin) else stringResource(R.string.set_mpin)
+                    SettingRow(mPinLabel, Icons.Default.Lock) {
+                        navController.navigate(com.example.aasha.ui.navigation.Screen.SetupMpin.route)
+                    }
+
                     SettingRow(
-                        label = stringResource(R.string.sync_status), 
+                        label = stringResource(R.string.sync_status),
                         icon = Icons.Default.Sync,
                         badge = if (uiState.pendingCount > 0) uiState.pendingCount.toString() else null
                     ) { showSyncDialog = true }
@@ -124,7 +133,6 @@ fun ProfileScreen(viewModel: ProfileViewModel = hiltViewModel()) {
             }
         }
     }
-
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },

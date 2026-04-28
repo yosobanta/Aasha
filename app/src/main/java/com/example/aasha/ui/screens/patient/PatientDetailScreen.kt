@@ -22,6 +22,9 @@ import java.util.*
 import androidx.compose.ui.res.stringResource
 import com.example.aasha.R
 
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PatientDetailScreen(
@@ -32,13 +35,60 @@ fun PatientDetailScreen(
     var patient by remember { mutableStateOf<Patient?>(null) }
     val vaccinations by viewModel.getVaccinations(patientId).collectAsState()
     val visits by viewModel.getVisits(patientId).collectAsState()
-    
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
     val dateFormatter = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
-    
+
     LaunchedEffect(patientId) {
         // In a real app, fetch from viewModel
         // For now, find in the list of patients
         patient = viewModel.patients.value.find { it.id == patientId }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.delete_patient)) },
+            text = {
+                Column {
+                    Text(stringResource(R.string.delete_patient_confirm))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it; passwordError = null },
+                        label = { Text(stringResource(R.string.enter_password)) },
+                        visualTransformation = PasswordVisualTransformation(),
+                        isError = passwordError != null,
+                        supportingText = { passwordError?.let { Text(it) } },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (viewModel.verifyPassword(password)) {
+                            viewModel.deletePatient(patientId)
+                            showDeleteDialog = false
+                            onBack()
+                        } else {
+                            passwordError = "Incorrect password"
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -54,10 +104,14 @@ fun PatientDetailScreen(
                     IconButton(onClick = { /* Edit patient */ }) {
                         Icon(Icons.Default.Edit, contentDescription = null)
                     }
+                    IconButton(onClick = { showDeleteDialog = true }) {
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), tint = MaterialTheme.colorScheme.error)
+                    }
                 }
             )
         }
     ) { padding ->
+
         if (patient == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = androidx.compose.ui.Alignment.Center) {
                 CircularProgressIndicator()

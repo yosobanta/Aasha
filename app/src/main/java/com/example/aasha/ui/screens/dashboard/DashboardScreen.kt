@@ -79,13 +79,13 @@ fun DashboardScreen(
             // Stats Cards
             item {
                 StatsSection(
-                    uiState.appointmentsToday, 
-                    uiState.vaccinationsDue, 
-                    uiState.patients.size,
+                    uiState.totalAppointments,
+                    uiState.totalVaccinations,
+                    uiState.totalPatients,
+                    uiState.totalVisits,
                     onPatientsClick = { navController.navigate(Screen.PatientList.route) }
                 )
             }
-
             // Search Bar
             item {
                 OutlinedTextField(
@@ -251,14 +251,22 @@ fun formatTimestamp(timestamp: Long): String {
 }
 
 @Composable
-fun StatsSection(appointments: Int, vaccinations: Int, patients: Int, onPatientsClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        StatCard(stringResource(R.string.appts), appointments.toString(), Color(0xFFE3F2FD), Modifier.weight(1f))
-        StatCard(stringResource(R.string.vaccine), vaccinations.toString(), Color(0xFFF3E5F5), Modifier.weight(1f))
-        StatCard(stringResource(R.string.patients), patients.toString(), Color(0xFFE8F5E9), Modifier.weight(1f), onClick = onPatientsClick)
+fun StatsSection(appointments: Int, vaccinations: Int, patients: Int, visits: Int, onPatientsClick: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(stringResource(R.string.patients), patients.toString(), Color(0xFFE8F5E9), Modifier.weight(1f), onClick = onPatientsClick)
+            StatCard(stringResource(R.string.appts), appointments.toString(), Color(0xFFE3F2FD), Modifier.weight(1f))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(stringResource(R.string.vaccine), vaccinations.toString(), Color(0xFFF3E5F5), Modifier.weight(1f))
+            StatCard(stringResource(R.string.recent_visits), visits.toString(), Color(0xFFFFF3E0), Modifier.weight(1f))
+        }
     }
 }
 

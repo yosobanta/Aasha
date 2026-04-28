@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import com.example.aasha.R
 
 sealed class ScreenMode {
+    object Selection : ScreenMode()
     object Login : ScreenMode()
     object Register : ScreenMode()
     object SetupMpin : ScreenMode()
@@ -32,17 +33,15 @@ sealed class ScreenMode {
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
     showMpinInitially: Boolean = true,
+    initialMode: ScreenMode? = null,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
-    var screenMode by remember { 
-        mutableStateOf<ScreenMode>(
-            if (showMpinInitially && viewModel.hasMpin()) ScreenMode.LoginMpin else ScreenMode.Login
-        ) 
+    var screenMode by remember {
+        mutableStateOf(initialMode ?: if (showMpinInitially) ScreenMode.LoginMpin else ScreenMode.Selection)
     }
-
     // Form states
     var name by remember { mutableStateOf("") }
     var aashaId by remember { mutableStateOf("") }
@@ -175,6 +174,7 @@ fun LoginScreen(
         )
         Text(
             text = when(screenMode) {
+                ScreenMode.Selection -> stringResource(R.string.welcome_back)
                 ScreenMode.Login -> stringResource(R.string.worker_login)
                 ScreenMode.Register -> stringResource(R.string.create_account)
                 ScreenMode.SetupMpin -> stringResource(R.string.setup_secure_mpin)
@@ -186,6 +186,28 @@ fun LoginScreen(
         )
 
         when (screenMode) {
+            ScreenMode.Selection -> {
+                val hasMpin by viewModel.hasMpin.collectAsState()
+                Button(
+                    onClick = { screenMode = ScreenMode.LoginMpin },
+                    enabled = hasMpin,
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Text(stringResource(R.string.login_with_mpin), fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { screenMode = ScreenMode.Login },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Text(stringResource(R.string.login_with_aasha_id), fontSize = 18.sp)
+                }
+                Spacer(modifier = Modifier.height(32.dp))
+                TextButton(onClick = { screenMode = ScreenMode.Register }) {
+                    Text(stringResource(R.string.new_user_signup))
+                }
+            }
+
             ScreenMode.Login -> {
                 OutlinedTextField(
                     value = aashaId,

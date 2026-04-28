@@ -18,6 +18,11 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class PatientRepository @Inject constructor(
     private val patientDao: PatientDao,
@@ -25,18 +30,31 @@ class PatientRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     @ApplicationContext private val context: Context
 ) {
-    val patients: Flow<List<Patient>> = patientDao.getAllPatients()
-    val pendingCount: Flow<Int> = patientDao.getPendingCount()
+    val patients: Flow<List<Patient>> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else patientDao.getAllPatients(id)
+    }
+
+    val pendingCount: Flow<Int> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(0) else patientDao.getPendingCount(id)
+    }
+
+    val patientCount: Flow<Int> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(0) else patientDao.getPatientCount(id)
+    }
+
     val lastSyncTime: Flow<Long> = sessionManager.lastSyncTime
 
-    fun getPatientsFlow(): Flow<List<Patient>> = patientDao.getAllPatients()
+    fun getPatientsFlow(): Flow<List<Patient>> = patients
 
-    fun searchPatients(query: String): Flow<List<Patient>> = patientDao.searchPatients(query)
+    fun searchPatients(query: String): Flow<List<Patient>> = sessionManager.workerId.flatMapLatest { id ->
+        if (id == null) flowOf(emptyList()) else patientDao.searchPatients(id, query)
+    }
 
     suspend fun getPatientById(id: String): Patient? = patientDao.getPatientById(id)
 
     suspend fun isDuplicate(name: String, village: String, age: Int): Patient? {
-        return patientDao.findDuplicate(name, village, age - 2, age + 2)
+        val workerId = sessionManager.workerId.first() ?: ""
+        return patientDao.findDuplicate(workerId, name, village, age - 2, age + 2)
     }
 
     suspend fun addPatient(patient: Patient) {

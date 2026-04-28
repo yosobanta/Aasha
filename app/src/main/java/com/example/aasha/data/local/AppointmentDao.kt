@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppointmentDao {
-    @Query("SELECT * FROM appointments ORDER BY dateTime DESC")
-    fun getAllAppointments(): Flow<List<Appointment>>
+    @Query("SELECT * FROM appointments WHERE workerId = :workerId ORDER BY dateTime DESC")
+    fun getAllAppointments(workerId: String): Flow<List<Appointment>>
 
     @Query("SELECT * FROM appointments WHERE syncStatus = :status")
     suspend fun getAppointmentsBySyncStatus(status: SyncStatus): List<Appointment>
@@ -18,4 +18,7 @@ interface AppointmentDao {
 
     @Update
     suspend fun updateAppointment(appointment: Appointment)
+
+    @Query("SELECT COUNT(*) FROM appointments WHERE workerId = :workerId")
+    fun getAppointmentCount(workerId: String): Flow<Int>
 }

@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
@@ -33,6 +34,17 @@ class LoginViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
+
+    private val _hasMpin = MutableStateFlow(false)
+    val hasMpin: StateFlow<Boolean> = _hasMpin.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            sessionManager.lastWorkerId.collect { id ->
+                _hasMpin.value = id != null && sessionManager.hasMpin(id)
+            }
+        }
+    }
 
     fun signUp(name: String, aashaId: String, email: String, password: String, locality: String) {
         _uiState.value = LoginUiState.Loading
@@ -68,6 +80,7 @@ class LoginViewModel @Inject constructor(
 
                 // 4. Save session locally
                 sessionManager.saveSession(normalizedAashaId, name, email, locality)
+                sessionManager.savePasswordHash(password, normalizedAashaId)
 
                 _uiState.value = LoginUiState.RegistrationSuccess
             } catch (e: Exception) {
@@ -81,15 +94,31 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             val normalizedAashaId = aashaId.trim().lowercase(Locale.ROOT)
             try {
-                // 1. Query Firestore to get email using AashaID
-                val user = firestoreRepository.getUserByAashaId(normalizedAashaId)
-                    ?: throw Exception("Aasha ID not found")
+                // 1. Try offline verification first if we have a saved workerId and password hash
+                val savedLastWorkerId = sessionManager.lastWorkerId.first()
+                if (savedLastWorkerId == normalizedAashaId && sessionManager.verifyPassword(password, normalizedAashaId)) {
+                    // Locally verified
+                    sessionManager.saveSession(
+                        workerId = normalizedAashaId,
+                        name = sessionManager.name.first() ?: "",
+                        email = sessionManager.email.first() ?: "",
+                        locality = sessionManager.locality.first() ?: ""
+                    )
+                    _uiState.value = LoginUiState.Success
+                    return@launch
+                }
 
-                // 2. Use retrieved email to login via Firebase Auth
+                // 2. If offline verification fails or not available, try online
+                // Query Firestore to get email using AashaID
+                val user = firestoreRepository.getUserByAashaId(normalizedAashaId)
+                    ?: throw Exception("Aasha ID not found locally or online")
+
+                // Use retrieved email to login via Firebase Auth
                 authRepository.signIn(user.email, password)
 
-                // 3. Cache locally
+                // Cache locally
                 sessionManager.saveSession(user.aashaId, user.name, user.email, user.locality)
+                sessionManager.savePasswordHash(password, user.aashaId)
 
                 _uiState.value = LoginUiState.Success
             } catch (e: Exception) {
@@ -101,7 +130,10 @@ class LoginViewModel @Inject constructor(
     fun loginWithMPin(pin: String) {
         _uiState.value = LoginUiState.Loading
         viewModelScope.launch {
-            if (sessionManager.verifyMpin(pin)) {
+            val workerId = sessionManager.lastWorkerId.first()
+            if (workerId != null && sessionManager.verifyMpin(pin, workerId)) {
+                // Successfully verified MPIN for the last user
+                sessionManager.setLoggedIn(true)
                 _uiState.value = LoginUiState.Success
             } else {
                 _uiState.value = LoginUiState.Error("Incorrect MPIN")
@@ -112,8 +144,14 @@ class LoginViewModel @Inject constructor(
     fun setupMPin(pin: String) {
         _uiState.value = LoginUiState.Loading
         viewModelScope.launch {
+            val workerId = sessionManager.workerId.first() ?: sessionManager.lastWorkerId.first()
+            if (workerId == null) {
+                _uiState.value = LoginUiState.Error("User session not found. Please login again.")
+                return@launch
+            }
+            
             if (pin.length == 4) {
-                sessionManager.saveMpin(pin)
+                sessionManager.saveMpin(pin, workerId)
                 _uiState.value = LoginUiState.MPinSetupSuccess
             } else {
                 _uiState.value = LoginUiState.Error("MPIN must be 4 digits")
@@ -131,9 +169,5 @@ class LoginViewModel @Inject constructor(
             authRepository.signOut()
             _uiState.value = LoginUiState.Idle
         }
-    }
-
-    fun hasMpin(): Boolean {
-        return sessionManager.hasMpin()
     }
 }

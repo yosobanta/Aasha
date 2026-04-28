@@ -34,10 +34,10 @@ fun AddPatientScreen(
     var phone by remember { mutableStateOf("") }
     var guardianName by remember { mutableStateOf("") }
     var isPregnant by remember { mutableStateOf<Boolean?>(null) }
-    
+
     var showDuplicateDialog by remember { mutableStateOf(false) }
     var duplicatePatient by remember { mutableStateOf<Patient?>(null) }
-    
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -72,7 +72,14 @@ fun AddPatientScreen(
 
             OutlinedTextField(
                 value = age,
-                onValueChange = { if (it.all { char -> char.isDigit() }) age = it },
+                onValueChange = {
+                    if (it.all { char -> char.isDigit() } && it.length <= 3) {
+                        val temp = it.toIntOrNull()
+                        if (temp == null || temp <= 120) {
+                            age = it
+                        }
+                    }
+                },
                 label = { Text(stringResource(R.string.age_required)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth()
@@ -85,7 +92,7 @@ fun AddPatientScreen(
             ) {
                 FilterChip(
                     selected = gender == "Male",
-                    onClick = { 
+                    onClick = {
                         gender = "Male"
                         isPregnant = null
                     },
@@ -98,7 +105,7 @@ fun AddPatientScreen(
                 )
                 FilterChip(
                     selected = gender == "Other",
-                    onClick = { 
+                    onClick = {
                         gender = "Other"
                         isPregnant = null
                     },
@@ -147,7 +154,7 @@ fun AddPatientScreen(
                         // Validation failed
                         return@Button
                     }
-                    
+
                     scope.launch {
                         val existing = viewModel.isDuplicate(name, village, ageInt)
                         if (existing != null) {

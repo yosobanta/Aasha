@@ -25,7 +25,16 @@ data class ProfileUiState(
     val currentLanguage: String = "en",
     val pendingCount: Int = 0,
     val lastSyncTime: Long = 0L,
-    val isSyncing: Boolean = false
+    val isSyncing: Boolean = false,
+    val hasMpin: Boolean = false
+)
+
+data class SessionData(
+    val workerId: String?,
+    val name: String?,
+    val locality: String?,
+    val language: String,
+    val hasMpin: Boolean
 )
 
 @HiltViewModel
@@ -37,15 +46,19 @@ class ProfileViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _isSyncing = MutableStateFlow(false)
-    
+
     private val _syncEvents = MutableSharedFlow<String>()
     val syncEvents: SharedFlow<String> = _syncEvents.asSharedFlow()
 
     private val sessionFlow = combine(
+        sessionManager.workerId,
         sessionManager.name,
         sessionManager.locality,
         sessionManager.language
-    ) { name, locality, language -> Triple(name, locality, language) }
+    ) { workerId, name, locality, language -> 
+        val hasMpin = workerId?.let { sessionManager.hasMpin(it) } ?: false
+        SessionData(workerId, name, locality, language, hasMpin) 
+    }
 
     private val syncStatusFlow = combine(
         patientRepository.pendingCount,
@@ -58,27 +71,27 @@ class ProfileViewModel @Inject constructor(
         sessionFlow,
         syncStatusFlow
     ) { patients, session, syncStatus ->
-        val (name, locality, language) = session
+        val (workerId, name, locality, language, hasMpin) = session
         val (pendingCount, lastSyncTime, isSyncing) = syncStatus
-        
+
         ProfileUiState(
             name = name ?: "Savitri Devi",
             area = locality ?: "Bishnupur Village",
             totalPatients = patients.size,
-            totalVisits = 0, 
-            vaccinationsCompleted = 0, 
+            totalVisits = 0,
+            vaccinationsCompleted = 0,
             medicinesDistributed = 0,
             currentLanguage = language,
             pendingCount = pendingCount,
             lastSyncTime = lastSyncTime,
-            isSyncing = isSyncing
+            isSyncing = isSyncing,
+            hasMpin = hasMpin
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ProfileUiState()
     )
-
     init {
         observeSyncStatus()
     }
