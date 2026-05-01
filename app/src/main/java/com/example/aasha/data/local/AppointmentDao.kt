@@ -21,4 +21,10 @@ interface AppointmentDao {
 
     @Query("SELECT COUNT(*) FROM appointments WHERE workerId = :workerId")
     fun getAppointmentCount(workerId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM appointments WHERE workerId = :workerId AND syncStatus != 'SYNCED'")
+    fun getPendingCount(workerId: String): Flow<Int>
+
+    @Query("SELECT * FROM appointments WHERE id = :id")
+    suspend fun getAppointmentById(id: String): Appointment?
 }

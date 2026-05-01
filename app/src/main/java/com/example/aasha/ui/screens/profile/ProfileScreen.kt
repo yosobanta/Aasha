@@ -41,6 +41,12 @@ fun ProfileScreen(
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showSyncDialog by remember { mutableStateOf(false) }
+    var showNotificationDialog by remember { mutableStateOf(false) }
+
+    val timePickerState = rememberTimePickerState(
+        initialHour = try { uiState.notificationTime.split(":")[0].toInt() } catch(e: Exception) { 9 },
+        initialMinute = try { uiState.notificationTime.split(":")[1].toInt() } catch(e: Exception) { 0 }
+    )
 
     LaunchedEffect(Unit) {
         viewModel.syncEvents.collectLatest { message ->
@@ -126,13 +132,45 @@ fun ProfileScreen(
                         icon = Icons.Default.Sync,
                         badge = if (uiState.pendingCount > 0) uiState.pendingCount.toString() else null
                     ) { showSyncDialog = true }
-                    SettingRow(stringResource(R.string.notification_settings), Icons.Default.Notifications) { }
+                    SettingRow(stringResource(R.string.notification_settings), Icons.Default.Notifications) { showNotificationDialog = true }
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     SettingRow(stringResource(R.string.logout), Icons.Default.ExitToApp, color = Color.Red) { showLogoutDialog = true }
                 }
             }
         }
     }
+    if (showNotificationDialog) {
+        AlertDialog(
+            onDismissRequest = { showNotificationDialog = false },
+            title = { Text(stringResource(R.string.notification_settings)) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(stringResource(R.string.set_daily_reminder_time), style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    TimePicker(state = timePickerState)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val hour = if (timePickerState.hour < 10) "0${timePickerState.hour}" else "${timePickerState.hour}"
+                    val minute = if (timePickerState.minute < 10) "0${timePickerState.minute}" else "${timePickerState.minute}"
+                    viewModel.updateNotificationTime("$hour:$minute")
+                    showNotificationDialog = false
+                }) {
+                    Text(stringResource(R.string.save))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNotificationDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },

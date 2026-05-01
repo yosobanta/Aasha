@@ -7,7 +7,7 @@ import java.util.UUID
 @Entity(tableName = "patients")
 data class Patient(
     @PrimaryKey
-    val id: String = "",
+    val id: String = UUID.randomUUID().toString(),
 
     val name: String = "",
     val age: Int = 0,
@@ -20,8 +20,8 @@ data class Patient(
 
     val workerId: String = "",
 
-    val createdAt: Long = 0L,
-    val lastUpdated: Long = 0L,
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastUpdated: Long = System.currentTimeMillis(),
 
     val isDeleted: Boolean = false,
 

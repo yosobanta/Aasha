@@ -21,4 +21,10 @@ interface VisitDao {
 
     @Query("SELECT COUNT(*) FROM visits WHERE workerId = :workerId")
     fun getVisitCount(workerId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM visits WHERE workerId = :workerId AND syncStatus != 'SYNCED'")
+    fun getPendingCount(workerId: String): Flow<Int>
+
+    @Query("SELECT * FROM visits WHERE id = :id")
+    suspend fun getVisitById(id: String): Visit?
 }

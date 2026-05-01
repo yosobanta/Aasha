@@ -9,6 +9,7 @@ import androidx.work.WorkManager
 import com.example.aasha.data.local.SessionManager
 import com.example.aasha.data.repository.MainRepository
 import com.example.aasha.data.repository.PatientRepository
+import com.example.aasha.data.worker.DailyReminderWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -23,6 +24,7 @@ data class ProfileUiState(
     val vaccinationsCompleted: Int = 0,
     val medicinesDistributed: Int = 0,
     val currentLanguage: String = "en",
+    val notificationTime: String = "09:00",
     val pendingCount: Int = 0,
     val lastSyncTime: Long = 0L,
     val isSyncing: Boolean = false,
@@ -34,6 +36,7 @@ data class SessionData(
     val name: String?,
     val locality: String?,
     val language: String,
+    val notificationTime: String,
     val hasMpin: Boolean
 )
 
@@ -54,34 +57,39 @@ class ProfileViewModel @Inject constructor(
         sessionManager.workerId,
         sessionManager.name,
         sessionManager.locality,
-        sessionManager.language
-    ) { workerId, name, locality, language -> 
+        sessionManager.language,
+        sessionManager.notificationTime
+    ) { workerId, name, locality, language, notificationTime ->
         val hasMpin = workerId?.let { sessionManager.hasMpin(it) } ?: false
-        SessionData(workerId, name, locality, language, hasMpin) 
+        SessionData(workerId, name, locality, language, notificationTime, hasMpin)
     }
 
     private val syncStatusFlow = combine(
         patientRepository.pendingCount,
+        repository.pendingCount,
         patientRepository.lastSyncTime,
         _isSyncing
-    ) { pending, lastSync, syncing -> Triple(pending, lastSync, syncing) }
+    ) { pPending, mPending, lastSync, syncing -> Triple(pPending + mPending, lastSync, syncing) }
 
     val uiState: StateFlow<ProfileUiState> = combine(
         patientRepository.patients,
+        repository.visitCount,
+        repository.vaccinationCount,
         sessionFlow,
         syncStatusFlow
-    ) { patients, session, syncStatus ->
-        val (workerId, name, locality, language, hasMpin) = session
+    ) { patients, visits, vaccines, session, syncStatus ->
+        val (workerId, name, locality, language, notificationTime, hasMpin) = session
         val (pendingCount, lastSyncTime, isSyncing) = syncStatus
 
         ProfileUiState(
             name = name ?: "Savitri Devi",
             area = locality ?: "Bishnupur Village",
             totalPatients = patients.size,
-            totalVisits = 0,
-            vaccinationsCompleted = 0,
+            totalVisits = visits,
+            vaccinationsCompleted = vaccines,
             medicinesDistributed = 0,
             currentLanguage = language,
+            notificationTime = notificationTime,
             pendingCount = pendingCount,
             lastSyncTime = lastSyncTime,
             isSyncing = isSyncing,
@@ -92,6 +100,7 @@ class ProfileViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ProfileUiState()
     )
+
     init {
         observeSyncStatus()
     }
@@ -101,9 +110,9 @@ class ProfileViewModel @Inject constructor(
             .getWorkInfosForUniqueWorkFlow("patient_sync")
             .onEach { workInfos ->
                 val workInfo = workInfos.firstOrNull() ?: return@onEach
-                
+
                 val isRunning = workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
-                
+
                 if (isRunning && !_isSyncing.value) {
                     _syncEvents.emit("Sync Started")
                 } else if (!isRunning && _isSyncing.value) {
@@ -113,7 +122,7 @@ class ProfileViewModel @Inject constructor(
                         _syncEvents.emit("Sync Failed")
                     }
                 }
-                
+
                 _isSyncing.value = isRunning
             }
             .launchIn(viewModelScope)
@@ -127,6 +136,13 @@ class ProfileViewModel @Inject constructor(
     fun changeLanguage(langCode: String) {
         viewModelScope.launch {
             sessionManager.saveLanguage(langCode)
+        }
+    }
+
+    fun updateNotificationTime(time: String) {
+        viewModelScope.launch {
+            sessionManager.saveNotificationTime(time)
+            DailyReminderWorker.scheduleNext(application, sessionManager)
         }
     }
 

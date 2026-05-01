@@ -10,6 +10,8 @@
     <string name="language_selection">Language Selection</string>
     <string name="sync_status">Sync Status</string>
     <string name="notification_settings">Notification Settings</string>
+    <string name="set_daily_reminder_time">Set Daily Reminder Time</string>
+    <string name="save">Save</string>
     <string name="logout">Logout</string>
     <string name="logout_confirm_title">Logout</string>
     <string name="logout_confirm_msg">Are you sure you want to logout? You will need to enter your MPIN to login again.</string>
@@ -35,6 +37,16 @@
     <string name="sync_started">Sync Started</string>
     <string name="sync_completed">Sync Completed</string>
     <string name="sync_failed">Sync Failed</string>
+
+    <!-- Notifications -->
+    <string name="daily_reminders_channel_name">Daily Reminders</string>
+    <string name="daily_reminders_channel_desc">Daily summary of appointments and vaccinations</string>
+    <string name="todays_appointments_title">Today\'s Appointments</string>
+    <string name="appointments_scheduled_msg">You have %d appointments scheduled for today.</string>
+    <string name="booster_reminders_channel_name">Booster Dose Reminders</string>
+    <string name="booster_reminders_channel_desc">Notifications for upcoming booster doses</string>
+    <string name="upcoming_vaccination_title">Upcoming Vaccination</string>
+    <string name="booster_reminder_msg">%1$s has a scheduled %2$s dose tomorrow.</string>
 
     <!-- Add Patient -->
     <string name="add_new_patient">Add New Patient</string>
@@ -149,4 +161,14 @@
     <string name="delete_patient_confirm">Are you sure you want to delete this patient record? This action requires your password.</string>
     <string name="enter_password">Enter Password</string>
     <string name="delete">Delete</string>
+
+    <!-- Booster Dose -->
+    <string name="requires_booster">Requires Booster Dose?</string>
+    <string name="select_booster_date">Select Booster Date</string>
+    <string name="select_reminder_time">Select Reminder Time</string>
+    <string name="booster_date_label">Booster Date: %s</string>
+    <string name="reminder_time_label">Reminder Time: %s</string>
+    <string name="booster_selection_error">Select booster date and reminder time</string>
+    <string name="reminder_helper_text">Reminder will be sent 1 day before</string>
+    <string name="future_date_error">Select a future date</string>
 </resources>

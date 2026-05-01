@@ -29,9 +29,33 @@ fun VaccinationScreen(
     var vaccineName by remember { mutableStateOf("") }
     var doseNumber by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
-    
-    val vaccineList = listOf("BCG", "OPV", "DPT", "Hepatitis B", "Measles", "Vitamin A")
 
+    var requiresBooster by remember { mutableStateOf(false) }
+    var boosterDate by remember { mutableStateOf<Long?>(null) }
+    var reminderTime by remember { mutableStateOf<Pair<Int, Int>?>(null) } // hour, minute
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState(
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                return utcTimeMillis > calendar.timeInMillis
+            }
+        }
+    )
+
+    val timePickerState = rememberTimePickerState()
+
+    val vaccineList = listOf("BCG", "OPV", "DPT", "Hepatitis B", "Measles", "Pentavalent","Japanese Encephalitis (JE)","DPT Booster-1", "OPV Booster", "MR-2")
+
+    val isBoosterValid = !requiresBooster || (boosterDate != null && reminderTime != null)
+    val canSave = selectedPatient != null && vaccineName.isNotBlank() && isBoosterValid
     Scaffold(
         topBar = {
             TopAppBar(
@@ -104,25 +128,120 @@ fun VaccinationScreen(
                 minLines = 3
             )
 
+            HorizontalDivider()
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text(stringResource(R.string.requires_booster), style = MaterialTheme.typography.bodyLarge)
+                Switch(
+                    checked = requiresBooster,
+                    onCheckedChange = { requiresBooster = it }
+                )
+            }
+
+            if (requiresBooster) {
+                val sdf = remember { java.text.SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
+                
+                OutlinedButton(
+                    onClick = { showDatePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(boosterDate?.let { stringResource(R.string.booster_date_label, sdf.format(Date(it))) } ?: stringResource(R.string.select_booster_date))
+                }
+
+                OutlinedButton(
+                    onClick = { showTimePicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(reminderTime?.let { (h, m) -> stringResource(R.string.reminder_time_label, String.format("%02d:%02d", h, m)) } ?: stringResource(R.string.select_reminder_time))
+                }
+                
+                if (boosterDate == null || reminderTime == null) {
+                    Text(
+                        text = stringResource(R.string.booster_selection_error),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.reminder_helper_text),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { showDatePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            boosterDate = datePickerState.selectedDateMillis
+                            showDatePicker = false
+                        }) { Text("OK") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
+            }
+
+            if (showTimePicker) {
+                AlertDialog(
+                    onDismissRequest = { showTimePicker = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            reminderTime = Pair(timePickerState.hour, timePickerState.minute)
+                            showTimePicker = false
+                        }) { Text("OK") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+                    },
+                    text = {
+                        TimePicker(state = timePickerState)
+                    }
+                )
+            }
+
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = {
                     val patient = selectedPatient
-                    if (patient != null && vaccineName.isNotBlank()) {
+                    if (patient != null && vaccineName.isNotBlank() && isBoosterValid) {
+                        val reminderTimestamp = if (requiresBooster && boosterDate != null && reminderTime != null) {
+                            val cal = Calendar.getInstance()
+                            cal.timeInMillis = boosterDate!!
+                            cal.add(Calendar.DAY_OF_YEAR, -1)
+                            cal.set(Calendar.HOUR_OF_DAY, reminderTime!!.first)
+                            cal.set(Calendar.MINUTE, reminderTime!!.second)
+                            cal.set(Calendar.SECOND, 0)
+                            cal.set(Calendar.MILLISECOND, 0)
+                            cal.timeInMillis
+                        } else null
+
                         val vaccination = Vaccination(
                             patientId = patient.id,
                             patientName = patient.name,
                             vaccineName = vaccineName,
                             doseNumber = doseNumber,
                             dateAdministered = System.currentTimeMillis(),
-                            remarks = notes
+                            remarks = notes,
+                            requiresBooster = requiresBooster,
+                            boosterDate = boosterDate,
+                            reminderTime = reminderTimestamp
                         )
                         patientViewModel.addVaccination(vaccination)
                         onBack()
                     }
                 },
-                enabled = selectedPatient != null && vaccineName.isNotBlank(),
+                enabled = canSave,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.save_vaccination))

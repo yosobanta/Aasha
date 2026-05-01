@@ -23,14 +23,15 @@ sealed class SplashRoute {
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val mainRepository: com.example.aasha.data.repository.MainRepository
 ) : ViewModel() {
 
     val isLoggedIn: StateFlow<Boolean> = sessionManager.isLoggedIn
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _hasMpin = MutableStateFlow(
-        runBlocking { 
+        runBlocking {
             val id = sessionManager.lastWorkerId.first()
             id != null && sessionManager.hasMpin(id)
         }
@@ -42,8 +43,10 @@ class SplashViewModel @Inject constructor(
 
     init {
         checkSession()
+        viewModelScope.launch {
+            mainRepository.rescheduleAllReminders()
+        }
     }
-
     private fun checkSession() {
         viewModelScope.launch {
             val isLoggedIn = sessionManager.isLoggedIn.first()

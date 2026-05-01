@@ -19,20 +19,22 @@ class SyncWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
-        Log.d("SYNC_DEBUG", "🔥 SyncWorker STARTED")
+        Log.d("SYNC_DEBUG", "👷 SyncWorker: Background job started")
 
         return try {
             // Sync patients
+            Log.d("SYNC_DEBUG", "👷 SyncWorker: Initiating Patient Sync...")
             patientRepository.syncLocalWithRemote()
-            
+
             // Sync appointments, visits, etc.
+            Log.d("SYNC_DEBUG", "👷 SyncWorker: Initiating Main Data Sync (Visits/Vaccinations/Appointments)...")
             mainRepository.syncLocalWithRemote()
-            
-            Log.d("SYNC_DEBUG", "✅ Sync SUCCESS")
+
+            Log.d("SYNC_DEBUG", "✅ SyncWorker: ALL SYNC OPERATIONS COMPLETED SUCCESS")
             Result.success()
         } catch (e: Exception) {
-            Log.e("SYNC_DEBUG", "❌ Sync FAILED: ${e.message}")
-            Result.failure()
+            Log.e("SYNC_DEBUG", "❌ SyncWorker: CRITICAL FAILURE: ${e.message}", e)
+            Result.retry()
         }
     }
 }

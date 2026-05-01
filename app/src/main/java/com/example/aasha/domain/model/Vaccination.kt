@@ -16,5 +16,8 @@ data class Vaccination(
     val dateAdministered: Long = System.currentTimeMillis(),
     val remarks: String = "",
     val lastUpdated: Long = System.currentTimeMillis(),
-    val syncStatus: SyncStatus = SyncStatus.PENDING
+    val syncStatus: SyncStatus = SyncStatus.PENDING,
+    val requiresBooster: Boolean = false,
+    val boosterDate: Long? = null,
+    val reminderTime: Long? = null
 )

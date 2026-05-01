@@ -51,6 +51,7 @@ class SessionManager @Inject constructor(
         private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
         private val LANGUAGE = stringPreferencesKey("language")
         private val LAST_SYNC_TIME = longPreferencesKey("last_sync_time")
+        private val NOTIFICATION_TIME = stringPreferencesKey("notification_time")
 
         private const val MPIN_HASH_PREFIX = "mpin_hash_"
         private const val PASSWORD_HASH_PREFIX = "password_hash_"
@@ -64,6 +65,7 @@ class SessionManager @Inject constructor(
     val isLoggedIn: Flow<Boolean> = dataStore.data.map { it[IS_LOGGED_IN] ?: false }
     val language: Flow<String> = dataStore.data.map { it[LANGUAGE] ?: "en" }
     val lastSyncTime: Flow<Long> = dataStore.data.map { it[LAST_SYNC_TIME] ?: 0L }
+    val notificationTime: Flow<String> = dataStore.data.map { it[NOTIFICATION_TIME] ?: "09:00" }
 
     fun hasMpin(workerId: String): Boolean {
         return encryptedPrefs.getString(MPIN_HASH_PREFIX + workerId, null) != null
@@ -114,6 +116,12 @@ class SessionManager @Inject constructor(
     suspend fun updateLastSyncTime(time: Long) {
         dataStore.edit { preferences ->
             preferences[LAST_SYNC_TIME] = time
+        }
+    }
+
+    suspend fun saveNotificationTime(time: String) {
+        dataStore.edit { preferences ->
+            preferences[NOTIFICATION_TIME] = time
         }
     }
 

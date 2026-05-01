@@ -74,9 +74,10 @@ class DashboardViewModel @Inject constructor(
 
     private val syncStatusFlow = combine(
         patientRepository.pendingCount,
+        repository.pendingCount,
         patientRepository.lastSyncTime,
         _isSyncing
-    ) { pending, lastSync, syncing -> Triple(pending, lastSync, syncing) }
+    ) { pPending, mPending, lastSync, syncing -> Triple(pPending + mPending, lastSync, syncing) }
 
     private val statsFlow = combine(
         patientRepository.patientCount,

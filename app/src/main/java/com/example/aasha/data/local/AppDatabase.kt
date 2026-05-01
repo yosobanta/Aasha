@@ -8,7 +8,7 @@ import com.example.aasha.domain.model.Visit
 
 @Database(
     entities = [Patient::class, Visit::class, Vaccination::class, Appointment::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

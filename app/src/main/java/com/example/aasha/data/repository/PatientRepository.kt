@@ -46,7 +46,7 @@ class PatientRepository @Inject constructor(
 
     fun getPatientsFlow(): Flow<List<Patient>> = patients
 
-    fun searchPatients(query: String): Flow<List<Patient>> = sessionManager.workerId.flatMapLatest { id ->
+    fun searchPatients(query: String): Flow<List<Patient>> = sessionManager.workerId.flatMapLatest { id ->      
         if (id == null) flowOf(emptyList()) else patientDao.searchPatients(id, query)
     }
 
@@ -89,94 +89,109 @@ class PatientRepository @Inject constructor(
     }
 
     suspend fun syncLocalWithRemote() {
-        Log.d("SYNC_DEBUG", "🔥🔥 syncLocalWithRemote STARTED")
+        Log.d("SYNC_DEBUG", "🚀 Starting Sync Cycle [Local <-> Remote]")
         val workerId = sessionManager.workerId.first()
         if (workerId.isNullOrEmpty()) {
-            Log.e("SYNC_DEBUG", "❌ WorkerId is null or empty, skipping sync")
+            Log.e("SYNC_DEBUG", "❌ WorkerId is null or empty, sync aborted")
             return
         }
 
         try {
             // 1. PULL LOGIC (Firebase -> Local)
-            Log.d("SYNC_DEBUG", "📥 Starting PULL logic")
+            Log.d("SYNC_DEBUG", "📥 PULL: Fetching updates from Firestore for worker: $workerId")
             fetchRemotePatients(workerId)
 
             // 2. PUSH LOGIC (Local -> Firebase)
-            Log.d("SYNC_DEBUG", "📤 Starting PUSH logic")
+            Log.d("SYNC_DEBUG", "📤 PUSH: Checking for PENDING local changes")
             val pendingPatients = patientDao.getPatientsBySyncStatus(SyncStatus.PENDING)
-            Log.d("SYNC_DEBUG", "Pending patients count: ${pendingPatients.size}")
+            Log.d("SYNC_DEBUG", "📊 Found ${pendingPatients.size} patients pending sync")
+
+            var successCount = 0
+            var errorCount = 0
 
             pendingPatients.forEach { patient ->
                 try {
-                    Log.d("SYNC_DEBUG", "Processing patient: ${patient.id} (${patient.name})")
+                    Log.d("SYNC_DEBUG", "🔄 Syncing patient: ${patient.id} | Name: ${patient.name}")
                     val docRef = firestore.collection("users").document(workerId).collection("patients").document(patient.id)
-                    val remoteDoc = docRef.get().await()
-                    
-                    if (!remoteDoc.exists()) {
-                        Log.d("SYNC_DEBUG", "Remote doc missing, creating for: ${patient.id}")
-                        docRef.set(patient.copy(syncStatus = SyncStatus.SYNCED)).await()
+
+                    if (patient.isDeleted) {
+                        Log.d("SYNC_DEBUG", "🗑️ Patient ${patient.id} is deleted locally. Deleting from remote...")
+                        docRef.delete().await()
                         patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.SYNCED))
+                        Log.d("SYNC_DEBUG", "✅ Successfully deleted remote document for ${patient.id}")
                     } else {
-                        val remoteLastUpdated = remoteDoc.getLong("lastUpdated") ?: 0L
-                        Log.d("SYNC_DEBUG", "Comparing timestamps: Local(${patient.lastUpdated}) vs Remote($remoteLastUpdated)")
-                        
-                        if (patient.lastUpdated >= remoteLastUpdated) {
-                            Log.d("SYNC_DEBUG", "Local is newer/same, pushing to remote: ${patient.id}")
-                            docRef.set(patient.copy(syncStatus = SyncStatus.SYNCED), SetOptions.merge()).await()
+                        val remoteDoc = docRef.get().await()
+                        if (!remoteDoc.exists()) {
+                            Log.d("SYNC_DEBUG", "🆕 Patient ${patient.id} does not exist on remote. Creating...")
+                            docRef.set(patient.copy(syncStatus = SyncStatus.SYNCED)).await()
                             patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.SYNCED))
+                            Log.d("SYNC_DEBUG", "✅ Successfully created remote document for ${patient.id}")
                         } else {
-                            Log.d("SYNC_DEBUG", "Remote is newer, pulling to local: ${patient.id}")
-                            val remotePatient = remoteDoc.toObject(Patient::class.java)
-                            if (remotePatient != null) {
-                                patientDao.insertPatient(remotePatient.copy(syncStatus = SyncStatus.SYNCED))
+                            val remoteLastUpdated = remoteDoc.getLong("lastUpdated") ?: 0L
+                            Log.d("SYNC_DEBUG", "⚖️ Conflict Check [${patient.id}]: Local(${patient.lastUpdated}) vs Remote($remoteLastUpdated)")
+
+                            if (patient.lastUpdated >= remoteLastUpdated) {
+                                Log.d("SYNC_DEBUG", "🔼 Local is newer. Pushing update for ${patient.id}")
+                                docRef.set(patient.copy(syncStatus = SyncStatus.SYNCED), SetOptions.merge()).await()
+                                patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.SYNCED))
+                                Log.d("SYNC_DEBUG", "✅ Successfully updated remote document for ${patient.id}")
+                            } else {
+                                Log.d("SYNC_DEBUG", "🔽 Remote is newer. Pulling update for ${patient.id}")
+                                val remotePatient = remoteDoc.toObject(Patient::class.java)
+                                if (remotePatient != null) {
+                                    patientDao.insertPatient(remotePatient.copy(syncStatus = SyncStatus.SYNCED))
+                                    Log.d("SYNC_DEBUG", "✅ Successfully updated local record for ${patient.id}")
+                                }
                             }
                         }
                     }
+                    successCount++
                 } catch (e: Exception) {
                     Log.e("SYNC_DEBUG", "❌ Error syncing patient ${patient.id}: ${e.message}")
                     patientDao.updatePatient(patient.copy(syncStatus = SyncStatus.ERROR))
+                    errorCount++
                 }
             }
-            
+
             sessionManager.updateLastSyncTime(System.currentTimeMillis())
-            Log.d("SYNC_DEBUG", "✅ syncLocalWithRemote FINISHED SUCCESS")
+            Log.d("SYNC_DEBUG", "🏁 Sync Cycle Finished. Success: $successCount, Errors: $errorCount")
         } catch (e: Exception) {
-            Log.e("SYNC_DEBUG", "❌ syncLocalWithRemote FAILED: ${e.message}")
+            Log.e("SYNC_DEBUG", "💥 Critical failure in syncLocalWithRemote: ${e.message}", e)
             throw e
         }
     }
 
     suspend fun fetchRemotePatients(workerId: String) {
         val lastSyncTimeValue = sessionManager.lastSyncTime.first()
-        Log.d("SYNC_DEBUG", "Fetching remote patients since: $lastSyncTimeValue")
-        
+        Log.d("SYNC_DEBUG", "🔍 Querying Firestore for patients updated after: $lastSyncTimeValue")
+
         try {
             val querySnapshot = firestore.collection("users").document(workerId).collection("patients")
                 .whereGreaterThan("lastUpdated", lastSyncTimeValue)
                 .get()
                 .await()
 
-            Log.d("SYNC_DEBUG", "Found ${querySnapshot.size()} updated patients in Firestore")
+            Log.d("SYNC_DEBUG", "📥 Firestore returned ${querySnapshot.size()} documents")
 
             for (doc in querySnapshot.documents) {
                 val remotePatient = doc.toObject(Patient::class.java) ?: continue
-                Log.d("SYNC_DEBUG", "Processing remote patient: ${remotePatient.id}")
+                Log.d("SYNC_DEBUG", "💾 Processing fetched patient: ${remotePatient.id}")
                 val localPatient = patientDao.getPatientById(remotePatient.id)
 
                 if (localPatient == null) {
-                    Log.d("SYNC_DEBUG", "New remote patient, inserting: ${remotePatient.id}")
+                    Log.d("SYNC_DEBUG", "➕ New remote patient found. Inserting locally: ${remotePatient.id}")
                     patientDao.insertPatient(remotePatient.copy(syncStatus = SyncStatus.SYNCED))
                 } else {
                     if (remotePatient.lastUpdated > localPatient.lastUpdated) {
-                        Log.d("SYNC_DEBUG", "Remote patient is newer, updating local: ${remotePatient.id}")
+                        Log.d("SYNC_DEBUG", "🆙 Remote update found for existing patient. Updating locally: ${remotePatient.id}")
                         patientDao.updatePatient(remotePatient.copy(syncStatus = SyncStatus.SYNCED))
                     } else {
-                        Log.d("SYNC_DEBUG", "Local patient is newer or same, skipping pull for: ${remotePatient.id}")
+                        Log.d("SYNC_DEBUG", "⏭️ Local record is already up-to-date for ${remotePatient.id}")
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.e("SYNC_DEBUG", "❌ Error fetching remote patients: ${e.message}")
+            Log.e("SYNC_DEBUG", "❌ Error during fetchRemotePatients: ${e.message}")
             throw e
         }
     }

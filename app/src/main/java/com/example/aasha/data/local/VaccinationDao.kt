@@ -21,4 +21,13 @@ interface VaccinationDao {
 
     @Query("SELECT COUNT(*) FROM vaccinations WHERE workerId = :workerId")
     fun getVaccinationCount(workerId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM vaccinations WHERE workerId = :workerId AND syncStatus != 'SYNCED'")
+    fun getPendingCount(workerId: String): Flow<Int>
+
+    @Query("SELECT * FROM vaccinations WHERE id = :id")
+    suspend fun getVaccinationById(id: String): Vaccination?
+
+    @Query("SELECT * FROM vaccinations WHERE requiresBooster = 1 AND reminderTime > :currentTime")
+    suspend fun getPendingBoosterVaccinations(currentTime: Long): List<Vaccination>
 }
