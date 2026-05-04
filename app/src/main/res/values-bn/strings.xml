@@ -1,0 +1,142 @@
+<resources>
+    <string name="app_name">আশা</string>
+    
+    <!-- Profile Screen -->
+    <string name="performance_summary">কাজের সারাংশ</string>
+    <string name="patients">রোগী</string>
+    <string name="visits">পরিদর্শন</string>
+    <string name="vaccines">টিকা</string>
+    <string name="meds">ওষুধ</string>
+    <string name="language_selection">ভাষা পরিবর্তন</string>
+    <string name="sync_status">সিঙ্ক অবস্থা</string>
+    <string name="notification_settings">বিজ্ঞপ্তি সেটিংস</string>
+    <string name="logout">লগআউট</string>
+    <string name="logout_confirm_title">লগআউট</string>
+    <string name="logout_confirm_msg">আপনি কি নিশ্চিত যে আপনি লগআউট করতে চান? আপনাকে আবার লগইন করতে আপনার MPIN লিখতে হবে।</string>
+    <string name="cancel">বাতিল করুন</string>
+    <string name="select_language">ভাষা নির্বাচন করুন</string>
+    <string name="close">বন্ধ করুন</string>
+    <string name="last_synced">শেষ সিঙ্ক:</string>
+    <string name="pending_items">বাকি আইটেম:</string>
+    <string name="syncing_in_progress">সিঙ্ক হচ্ছে…</string>
+    <string name="sync_now">এখনই সিঙ্ক করুন</string>
+    <string name="syncing">সিঙ্ক হচ্ছে…</string>
+    <string name="never">কখনো না</string>
+    <string name="just_now">এইমাত্র</string>
+    <string name="mins_ago">%d মিনিট আগে</string>
+    <string name="hours_ago">%d ঘন্টা আগে</string>
+
+    <!-- Dashboard -->
+    <string name="namaste">নমস্কার, %s</string>
+    <string name="search_patients">রোগী খুঁজুন</string>
+    <string name="search_results">অনুসন্ধান ফলাফল</string>
+    <string name="todays_tasks">আজকের কাজ</string>
+    <string name="yrs_gender">%1$d বছর • %2$s</string>
+    <string name="sync_started">সিঙ্ক শুরু হয়েছে</string>
+    <string name="sync_completed">সিঙ্ক সম্পন্ন হয়েছে</string>
+    <string name="sync_failed">সিঙ্ক ব্যর্থ হয়েছে</string>
+
+    <!-- Add Patient -->
+    <string name="add_new_patient">নতুন রোগী যোগ করুন</string>
+    <string name="full_name_required">পুরো নাম *</string>
+    <string name="age_required">বয়স *</string>
+    <string name="gender_required">লিঙ্গ *</string>
+    <string name="male">পুরুষ</string>
+    <string name="female">মহিলা</string>
+    <string name="other">অন্যান্য</string>
+    <string name="is_pregnant">গর্ভবতী কি?</string>
+    <string name="village_required">গ্রাম/এলাকা *</string>
+    <string name="phone_optional">ফোন নম্বর (ঐচ্ছিক)</string>
+    <string name="guardian_optional">অভিভাবকের নাম (ঐচ্ছিক)</string>
+    <string name="save_patient">রোগী সংরক্ষণ করুন</string>
+    <string name="duplicate_found">সম্ভাব্য ডুপ্লিকেট পাওয়া গেছে</string>
+    <string name="duplicate_msg">একই ধরণের রোগী (%1$s, %2$d বছর) ইতিমধ্যে %3$s-এ আছে। চালিয়ে যাবেন কি?</string>
+    <string name="continue_anyway">তাও চালিয়ে যান</string>
+
+    <!-- Patient Detail -->
+    <string name="patient_profile">রোগীর প্রোফাইল</string>
+    <string name="medical_history">চিকিৎসার ইতিহাস</string>
+    <string name="no_records">সাম্প্রতিক কোনো পরিদর্শন বা টিকা রেকর্ড করা হয়নি।</string>
+    <string name="recent_visits">সাম্প্রতিক পরিদর্শন</string>
+    <string name="vaccinations">টিকা</string>
+    <string name="age">বয়স</string>
+    <string name="gender">লিঙ্গ</string>
+    <string name="village">গ্রাম</string>
+    <string name="phone">ফোন</string>
+    <string name="guardian">অভিভাবক</string>
+    <string name="status">অবস্থা</string>
+    <string name="pregnant">গর্ভবতী</string>
+
+    <!-- Login/Signup -->
+    <string name="aasha_id">আশা আইডি</string>
+    <string name="password">পাসওয়ার্ড</string>
+    <string name="login">লগইন</string>
+    <string name="new_user_signup">নতুন ব্যবহারকারী? এখানে সাইন আপ করুন</string>
+    <string name="full_name">পুরো নাম</string>
+    <string name="email_address">ইমেল ঠিকানা</string>
+    <string name="set_password">পাসওয়ার্ড সেট করুন</string>
+    <string name="serving_area">সেবা এলাকা / এলাকা</string>
+    <string name="signup">সাইন আপ করুন</string>
+    <string name="already_have_account">ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন করুন</string>
+    <string name="mpin_setup_msg">দ্রুত অ্যাক্সেসের জন্য ৪-সংখ্যার পিন সেট করুন</string>
+    <string name="mpin_label">৪-সংখ্যার MPIN</string>
+    <string name="set_mpin">MPIN সেট করুন</string>
+    <string name="mpin_entry_msg">চালিয়ে যেতে আপনার MPIN লিখুন</string>
+    <string name="unlock_app">অ্যাপ আনলক করুন</string>
+    <string name="use_id_instead">পরিবর্তে আশা আইডি ব্যবহার করুন</string>
+
+    <!-- Appointment -->
+    <string name="schedule_appointment">অ্যাপয়েন্টমেন্ট নির্ধারণ করুন</string>
+    <string name="select_patient">রোগী নির্বাচন করুন</string>
+    <string name="select_date">তারিখ নির্বাচন করুন</string>
+    <string name="select_time_slot">সময় নির্বাচন করুন</string>
+    <string name="confirm_booking">বুকিং নিশ্চিত করুন</string>
+    <string name="ok">ঠিক আছে</string>
+    <string name="success">সফলতা</string>
+    <string name="appointment_success">অ্যাপয়েন্টমেন্ট সফলভাবে বুক করা হয়েছে!</string>
+    <string name="error">ত্রুটি</string>
+
+    <!-- Vaccination/Visit -->
+    <string name="record_vaccination">টিকা রেকর্ড করুন</string>
+    <string name="vaccine_info">টিকার তথ্য</string>
+    <string name="vaccine_name">টিকার নাম</string>
+    <string name="dose_number">ডোজ নম্বর (যেমন ১ম, বুস্টার)</string>
+    <string name="additional_notes">অতিরিক্ত নোট</string>
+    <string name="save_vaccination">টিকা রেকর্ড সংরক্ষণ করুন</string>
+    <string name="record_visit">রোগীর পরিদর্শন রেকর্ড করুন</string>
+    <string name="reason_for_visit">পরিদর্শনের কারণ</string>
+    <string name="observations">পর্যবেক্ষণ / লক্ষণ</string>
+    <string name="treatment_advice">চিকিৎসা / পরামর্শ দেওয়া হয়েছে</string>
+    <string name="save_visit">পরিদর্শন রেকর্ড সংরক্ষণ করুন</string>
+    <string name="vaccine">টিকা</string>
+    <string name="appts">অ্যাপয়েন্ট</string>
+    <string name="new_patient">নতুন রোগী</string>
+    <string name="synced">সিঙ্ক হয়েছে</string>
+    <string name="items_pending">%d আইটেম বাকি</string>
+    <string name="all_data_synced">সব ডেটা সিঙ্ক হয়েছে</string>
+    <string name="last_sync">শেষ: %s</string>
+    <string name="never_synced">কখনো সিঙ্ক হয়নি</string>
+    <string name="select_a_patient">রোগী নির্বাচন করুন</string>
+    <string name="dashboard">ড্যাশবোর্ড</string>
+    <string name="add">যোগ করুন</string>
+    <string name="profile">প্রোফাইল</string>
+    <string name="quick_actions">দ্রুত কাজ</string>
+    <string name="new_appointment">নতুন অ্যাপয়েন্টমেন্ট</string>
+    <string name="add_visit">পরিদর্শন যোগ করুন</string>
+    <string name="empowering_asha">আশা কর্মীদের ক্ষমতায়ন</string>
+    <string name="no_notes">কোনো নোট নেই</string>
+    <string name="dose_prefix">ডোজ: %s</string>
+    <string name="worker_login">কর্মী লগইন</string>
+    <string name="create_account">অ্যাকাউন্ট তৈরি করুন</string>
+    <string name="setup_secure_mpin">সুরক্ষিত MPIN সেট করুন</string>
+    <string name="enter_mpin">MPIN লিখুন</string>
+    <string name="id_cannot_empty">আশা আইডি খালি হতে পারে না</string>
+    <string name="password_cannot_empty">পাসওয়ার্ড খালি হতে পারে না</string>
+    <string name="name_cannot_empty">নাম খালি হতে পারে না</string>
+    <string name="id_too_short">আশা আইডি অন্তত ৪ অক্ষরের হতে হবে</string>
+    <string name="email_invalid">অনুগ্রহ করে একটি বৈধ ইমেল লিখুন</string>
+    <string name="password_too_short">পাসওয়ার্ড অন্তত ৬ অক্ষরের হতে হবে</string>
+    <string name="locality_cannot_empty">এলাকা খালি হতে পারে না</string>
+    <string name="mpin_invalid">MPIN ঠিক ৪ সংখ্যার হতে হবে</string>
+    <string name="account_setup_success">অ্যাকাউন্ট এবং MPIN সফলভাবে সেট হয়েছে!</string>
+</resources>

@@ -67,6 +67,7 @@
 
     <!-- Patient Detail -->
     <string name="patient_profile">Patient Profile</string>
+    <string name="personal_info">Personal Info</string>
     <string name="medical_history">Medical History</string>
     <string name="no_records">No recent visits or vaccinations recorded.</string>
     <string name="recent_visits">Recent Visits</string>
