@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import java.util.Calendar
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 import androidx.work.WorkInfo
@@ -40,7 +41,8 @@ data class PatientTask(
     val id: String,
     val patientName: String,
     val taskType: String,
-    val isCompleted: Boolean
+    val isCompleted: Boolean,
+    val dateTime: Long
 )
 
 data class DashboardStats(
@@ -100,16 +102,26 @@ class DashboardViewModel @Inject constructor(
         val (name, locality) = session
         val (pendingCount, lastSyncTime, isSyncing) = syncStatus
 
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val todayStart = calendar.timeInMillis
+        calendar.add(Calendar.DAY_OF_YEAR, 1)
+        val todayEnd = calendar.timeInMillis
+
+        val todaysAppointments = appointments.filter {
+            it.dateTime in todayStart until todayEnd
+        }
+
         DashboardUiState(
             patients = patients,
             ashaName = name ?: "Savitri Devi",
             area = locality ?: "Bishnupur Village",
-            appointmentsToday = appointments.filter {
-                val today = System.currentTimeMillis()
-                it.dateTime in (today - 86400000..today + 86400000)
-            }.size,
-            tasks = appointments.map {
-                PatientTask(it.id, it.patientName, "Follow-up", false)
+            appointmentsToday = todaysAppointments.size,
+            tasks = todaysAppointments.filter { !it.isCompleted }.map {
+                PatientTask(it.id, it.patientName, "Follow-up", it.isCompleted, it.dateTime)
             },
             pendingCount = pendingCount,
             lastSyncTime = lastSyncTime,
@@ -164,6 +176,10 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun toggleTask(taskId: String) {
-        // Logic to toggle task completion in Room
+        viewModelScope.launch {
+            // Brief delay to allow the user to see the checkbox animation
+            kotlinx.coroutines.delay(300)
+            repository.updateAppointmentCompletion(taskId, true)
+        }
     }
 }

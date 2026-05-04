@@ -176,6 +176,10 @@ fun MainScreen(
                     viewModel = patientViewModel
                 )
             }
+            composable(Screen.Calendar.route) {
+                // CalendarScreen implementation
+                com.example.aasha.ui.screens.appointment.CalendarScreen(onBack = { navController.popBackStack() })
+            }
             composable(Screen.SetupMpin.route) {
                 LoginScreen(
                     onLoginSuccess = {

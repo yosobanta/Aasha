@@ -83,6 +83,16 @@ class MainRepository @Inject constructor(
         triggerOneTimeSync()
     }
 
+    suspend fun updateAppointmentCompletion(appointmentId: String, isCompleted: Boolean) {
+        appointmentDao.updateAppointmentCompletion(
+            id = appointmentId,
+            isCompleted = isCompleted,
+            lastUpdated = System.currentTimeMillis(),
+            syncStatus = SyncStatus.PENDING
+        )
+        triggerOneTimeSync()
+    }
+
     suspend fun saveVaccination(vaccination: Vaccination) {
         val workerId = sessionManager.workerId.first() ?: ""
         val updatedVaccination = vaccination.copy(

@@ -138,7 +138,18 @@ fun DashboardScreen(
                 }
             } else {
                 // Today's Tasks (Action Priority)
-                item { SectionTitle(stringResource(R.string.todays_tasks)) }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SectionTitle(stringResource(R.string.todays_tasks))
+                        TextButton(onClick = { navController.navigate(Screen.Calendar.route) }) {
+                            Text(text = "View All", color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
 
                 if (uiState.tasks.isEmpty()) {
                     item { EmptyTasksState() }
@@ -147,6 +158,7 @@ fun DashboardScreen(
                         TaskItem(
                             name = task.patientName,
                             type = task.taskType,
+                            time = task.dateTime,
                             isCompleted = task.isCompleted,
                             onToggle = { viewModel.toggleTask(task.id) }
                         )
@@ -182,7 +194,7 @@ private fun HeaderSection(name: String, area: String) {
         Surface(
             modifier = Modifier.size(48.dp),
             shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryLight
+            color = MaterialTheme.colorScheme.primaryContainer
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
@@ -306,7 +318,10 @@ private fun StatCard(label: String, value: String, icon: ImageVector, color: Col
 }
 
 @Composable
-private fun TaskItem(name: String, type: String, isCompleted: Boolean, onToggle: () -> Unit) {
+private fun TaskItem(name: String, type: String, time: Long, isCompleted: Boolean, onToggle: () -> Unit) {
+    val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+    val formattedTime = timeFormat.format(Date(time))
+
     AashaCard(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -333,7 +348,11 @@ private fun TaskItem(name: String, type: String, isCompleted: Boolean, onToggle:
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(text = name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
-                    Text(text = type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = type, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        Text(text = " • ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        Text(text = formattedTime, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
             Checkbox(

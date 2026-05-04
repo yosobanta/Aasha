@@ -27,4 +27,7 @@ interface AppointmentDao {
 
     @Query("SELECT * FROM appointments WHERE id = :id")
     suspend fun getAppointmentById(id: String): Appointment?
+
+    @Query("UPDATE appointments SET isCompleted = :isCompleted, lastUpdated = :lastUpdated, syncStatus = :syncStatus WHERE id = :id")
+    suspend fun updateAppointmentCompletion(id: String, isCompleted: Boolean, lastUpdated: Long, syncStatus: SyncStatus)
 }

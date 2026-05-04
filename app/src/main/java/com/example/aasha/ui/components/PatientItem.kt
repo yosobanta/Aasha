@@ -2,6 +2,8 @@ package com.example.aasha.ui.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -63,7 +65,7 @@ fun PatientItem(patient: Patient, onClick: () -> Unit) {
                 }
             }
             Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.ChevronRight,
+                imageVector = Icons.Default.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.outline
             )

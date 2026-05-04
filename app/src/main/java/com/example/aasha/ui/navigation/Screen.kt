@@ -15,4 +15,5 @@ sealed class Screen(val route: String) {
     object Visit : Screen("visit")
     object PatientList : Screen("patient_list")
     object SetupMpin : Screen("setup_mpin")
+    object Calendar : Screen("calendar")
 }
