@@ -1,5 +1,7 @@
 package com.example.aasha.ui.screens.dashboard
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,7 +48,7 @@ fun DashboardScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val sheetState = rememberModalBottomSheetState()
-    var showQuickActions by remember { mutableStateOf(false) }
+    var showEmergencyContacts by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.syncEvents.collectLatest { message ->
@@ -64,24 +66,20 @@ fun DashboardScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showQuickActions = true },
-                containerColor = MaterialTheme.colorScheme.primary,
+                onClick = { showEmergencyContacts = true },
+                containerColor = MaterialTheme.colorScheme.error,
                 contentColor = Color.White,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Quick Actions")
+                Icon(Icons.Default.Emergency, contentDescription = "Emergency Contacts")
             }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        if (showQuickActions) {
-            QuickActionsBottomSheet(
-                onDismiss = { showQuickActions = false },
-                sheetState = sheetState,
-                onAddPatient = { navController.navigate(Screen.AddPatient.route) },
-                onRecordVaccination = { /* Navigate */ },
-                onAddVisit = { /* Navigate */ },
-                onScheduleAppt = { /* Navigate */ }
+        if (showEmergencyContacts) {
+            EmergencyContactsBottomSheet(
+                onDismiss = { showEmergencyContacts = false },
+                sheetState = sheetState
             )
         }
 
@@ -378,14 +376,12 @@ private fun EmptyTasksState() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun QuickActionsBottomSheet(
+private fun EmergencyContactsBottomSheet(
     onDismiss: () -> Unit,
-    sheetState: SheetState,
-    onAddPatient: () -> Unit,
-    onRecordVaccination: () -> Unit,
-    onAddVisit: () -> Unit,
-    onScheduleAppt: () -> Unit
+    sheetState: SheetState
 ) {
+    val context = LocalContext.current
+    
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -399,62 +395,96 @@ private fun QuickActionsBottomSheet(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = stringResource(R.string.quick_actions),
+                text = stringResource(R.string.emergency_contacts),
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             
-            QuickActionItem(
-                label = stringResource(R.string.add_new_patient),
-                icon = Icons.Default.PersonAdd,
+            EmergencyContactItem(
+                label = stringResource(R.string.doctor),
+                name = "Dr. Sharma",
+                phone = "+91 98765 43210",
+                icon = Icons.Default.MedicalServices,
                 color = MaterialTheme.colorScheme.primary,
-                onClick = { onAddPatient(); onDismiss() }
+                onCall = {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:+919876543210"))
+                    context.startActivity(intent)
+                }
             )
-            QuickActionItem(
-                label = stringResource(R.string.record_vaccination),
-                icon = Icons.Default.Vaccines,
+            EmergencyContactItem(
+                label = stringResource(R.string.hospital),
+                name = "City General Hospital",
+                phone = "+91 12345 67890",
+                icon = Icons.Default.LocalHospital,
                 color = MaterialTheme.colorScheme.secondary,
-                onClick = { onRecordVaccination(); onDismiss() }
+                onCall = {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:+911234567890"))
+                    context.startActivity(intent)
+                }
             )
-            QuickActionItem(
-                label = stringResource(R.string.record_visit),
-                icon = Icons.Default.HomeWork,
-                color = Color(0xFFF59E0B),
-                onClick = { onAddVisit(); onDismiss() }
-            )
-            QuickActionItem(
-                label = stringResource(R.string.schedule_appointment),
-                icon = Icons.Default.Event,
-                color = Color(0xFF8B5CF6),
-                onClick = { onScheduleAppt(); onDismiss() }
+            EmergencyContactItem(
+                label = stringResource(R.string.ambulance),
+                name = "Emergency Services",
+                phone = "108",
+                icon = Icons.Default.EmergencyShare,
+                color = MaterialTheme.colorScheme.error,
+                onCall = {
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:108"))
+                    context.startActivity(intent)
+                }
             )
         }
     }
 }
 
 @Composable
-private fun QuickActionItem(label: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
+private fun EmergencyContactItem(
+    label: String,
+    name: String,
+    phone: String,
+    icon: ImageVector,
+    color: Color,
+    onCall: () -> Unit
+) {
     Surface(
-        onClick = onClick,
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Surface(
-                shape = CircleShape,
-                color = color.copy(alpha = 0.1f),
-                modifier = Modifier.size(48.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = null, tint = color)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                Surface(
+                    shape = CircleShape,
+                    color = color.copy(alpha = 0.1f),
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, tint = color)
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column {
+                    Text(text = label, style = MaterialTheme.typography.labelSmall, color = color)
+                    Text(text = name, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                    Text(text = phone, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
                 }
             }
-            Spacer(modifier = Modifier.width(20.dp))
-            Text(text = label, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+            Button(
+                onClick = onCall,
+                colors = ButtonDefaults.buttonColors(containerColor = color),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = stringResource(R.string.call))
+            }
         }
     }
 }

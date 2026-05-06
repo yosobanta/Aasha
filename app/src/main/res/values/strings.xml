@@ -43,6 +43,9 @@
     <string name="daily_reminders_channel_desc">Daily summary of appointments and vaccinations</string>
     <string name="todays_appointments_title">Today\'s Appointments</string>
     <string name="appointments_scheduled_msg">You have %d appointments scheduled for today.</string>
+    <string name="appointment_scheduled_success_title">Appointment Scheduled</string>
+    <string name="appointment_scheduled_success_msg">Appointment for %1$s scheduled on %2$s.</string>
+    <string name="appointment_reminder_msg">Appointment for %s is scheduled for today.</string>
     <string name="booster_reminders_channel_name">Booster Dose Reminders</string>
     <string name="booster_reminders_channel_desc">Notifications for upcoming booster doses</string>
     <string name="upcoming_vaccination_title">Upcoming Vaccination</string>
@@ -141,6 +144,11 @@
     <string name="new_appointment">New Appointment</string>
     <string name="add_visit">Add Visit</string>
     <string name="empowering_asha">Empowering ASHA Workers</string>
+    <string name="emergency_contacts">Emergency Contacts</string>
+    <string name="doctor">Doctor</string>
+    <string name="hospital">Hospital</string>
+    <string name="ambulance">Ambulance</string>
+    <string name="call">Call</string>
     <string name="no_notes">No notes</string>
     <string name="dose_prefix">Dose: %s</string>
     <string name="worker_login">Worker Login</string>

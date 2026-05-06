@@ -47,7 +47,7 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     
     LaunchedEffect(isLoggedIn) {
-        if (!isLoggedIn) {
+        if (!isLoggedIn && navController.currentDestination?.route != Screen.Splash.route) {
             navController.navigate(Screen.Login.route) {
                 popUpTo(0) { inclusive = true }
             }

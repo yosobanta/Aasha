@@ -1,7 +1,11 @@
 package com.example.aasha.data.repository
 
 import android.content.Context
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.example.aasha.data.local.*
 import com.example.aasha.data.sync.SyncWorker
@@ -21,6 +25,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.combine
+
+import com.example.aasha.data.worker.AppointmentReminderWorker
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
@@ -80,7 +88,70 @@ class MainRepository @Inject constructor(
             syncStatus = SyncStatus.PENDING
         )
         appointmentDao.insertAppointment(updatedAppointment)
+        
+        // Schedule reminder for the appointment day
+        scheduleAppointmentReminder(updatedAppointment)
+        
+        // Show immediate notification
+        showAppointmentScheduledNotification(updatedAppointment)
+        
         triggerOneTimeSync()
+    }
+
+    private fun scheduleAppointmentReminder(appointment: Appointment) {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = appointment.dateTime
+            set(Calendar.HOUR_OF_DAY, 8) // Remind at 8 AM on the day of appointment
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+        }
+
+        val now = System.currentTimeMillis()
+        val delay = calendar.timeInMillis - now
+
+        if (delay > 0) {
+            val data = Data.Builder()
+                .putString("patientName", appointment.patientName)
+                .build()
+
+            val reminderRequest = OneTimeWorkRequestBuilder<AppointmentReminderWorker>()
+                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                .setInputData(data)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "appointment_reminder_${appointment.id}",
+                ExistingWorkPolicy.REPLACE,
+                reminderRequest
+            )
+        }
+    }
+
+    private fun showAppointmentScheduledNotification(appointment: Appointment) {
+        val channelId = "appointment_confirmations"
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Appointment Confirmations",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val dateFormat = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+        val dateString = dateFormat.format(Date(appointment.dateTime))
+
+        val notification = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(com.example.aasha.R.drawable.ic_launcher_foreground)
+            .setContentTitle(context.getString(com.example.aasha.R.string.appointment_scheduled_success_title))
+            .setContentText(context.getString(com.example.aasha.R.string.appointment_scheduled_success_msg, appointment.patientName, dateString))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(appointment.id.hashCode(), notification)
     }
 
     suspend fun updateAppointmentCompletion(appointmentId: String, isCompleted: Boolean) {
